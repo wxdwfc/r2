@@ -28,6 +28,7 @@ ExternalProject_Add(libboost1.61
 )
 set(LIBBOOST_HEADERS ${BOOST_INSTALL_DIR}/include )
 set(LIBBOOST_LIBRARIES ${BOOST_INSTALL_DIR}/lib )
+include_directories( BEFORE ${LIBBOOST_HEADERS} )
 
 ## install gflags
 set(gflags_DIR "${CMAKE_SOURCE_DIR}/deps/gflags")
@@ -42,3 +43,28 @@ include_directories(${CMAKE_SOURCE_DIR}/deps/googletest/googletest/include)
 
 ## find other libs
 find_library(LIBIBVERBS NAMES ibverbs)
+
+  add_library( ssmalloc STATIC IMPORTED )
+  set_target_properties( ssmalloc PROPERTIES
+    IMPORTED_LOCATION ${LIBSSMALLOC_LIBRARIES}/libssmalloc.a
+    )
+  add_library( boost_system STATIC IMPORTED )
+  set_target_properties( boost_system PROPERTIES
+    IMPORTED_LOCATION ${LIBBOOST_LIBRARIES}/libboost_system.a
+    )
+  add_library( boost_coroutine STATIC IMPORTED )
+  set_target_properties( boost_coroutine PROPERTIES
+    IMPORTED_LOCATION ${LIBBOOST_LIBRARIES}/libboost_coroutine.a
+    )
+  add_library( boost_chrono STATIC IMPORTED )
+  set_target_properties( boost_chrono PROPERTIES
+    IMPORTED_LOCATION ${LIBBOOST_LIBRARIES}/libboost_chrono.a
+    )
+  add_library( boost_thread STATIC IMPORTED )
+  set_target_properties( boost_thread PROPERTIES
+    IMPORTED_LOCATION ${LIBBOOST_LIBRARIES}/libboost_thread.a
+    )
+  add_library( boost_context STATIC IMPORTED )
+  set_target_properties( boost_context PROPERTIES
+    IMPORTED_LOCATION ${LIBBOOST_LIBRARIES}/libboost_context.a
+    )

@@ -5,7 +5,13 @@ namespace r2 {
 template <typename T>
 class Future {
  public:
-  virtual T poll() = 0;
+  explicit Future(int cid) : cor_id(cid) {
+  }
+
+  virtual int poll() = 0;
+  int     cor_id;
+  T       res;
+
 };
 
 }

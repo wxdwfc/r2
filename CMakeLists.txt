@@ -5,13 +5,13 @@ project(rtwo)
 ADD_DEFINITIONS(-std=c++14)
 
 ## install dependies
-#include(deps/CMakeLists.txt)
-add_subdirectory(deps)
-
-add_executable(a src/test.cc)
+include(deps/deps.cmake)
 
 ## tests
 add_subdirectory(tests)
+
+## examples
+include(examples/examples.cmake)
 
 enable_testing()
 

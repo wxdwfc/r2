@@ -1,9 +1,8 @@
 #pragma once
 
-#include "logging.h"
+#include "logging.hpp"
 
 #include <vector>
-#include <iostream>
 #include <functional>
 
 #include <boost/coroutine/all.hpp>
@@ -12,12 +11,12 @@ namespace r2 {
 
 typedef boost::coroutines::symmetric_coroutine<void>::yield_type      handler_t;
 typedef boost::coroutines::symmetric_coroutine<void>::call_type       coroutine_func_t;
-typedef std::function<void (handler_t &yield)>                 internal_routine_t;
+typedef std::function<void (handler_t &yield)>                        internal_routine_t;
 
-class RoutineNode {
+class RoutineLink {
  public:
-  RoutineNode()  = default;
-  ~RoutineNode() = default;
+  RoutineLink()  = default;
+  ~RoutineLink() = default;
 
   class Routine {
    public:
@@ -26,7 +25,7 @@ class RoutineNode {
         unwrapperd_fuc_(f) {
     }
 
-    inline Routine *leave(RoutineNode &c) {
+    inline Routine *leave(RoutineLink &c) {
       active_ = false;
       auto next  = next_routine_;
       ASSERT(prev_routine_ != nullptr);
@@ -75,7 +74,7 @@ class RoutineNode {
   Routine *header_ = nullptr;
   Routine *tailer_ = nullptr;
 
-  DISABLE_COPY_AND_ASSIGN(RoutineNode);
+  DISABLE_COPY_AND_ASSIGN(RoutineLink);
 };
 
 } // namesapce r2
