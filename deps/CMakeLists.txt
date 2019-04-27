@@ -40,6 +40,5 @@ set(gtest_DIR "${CMAKE_SOURCE_DIR}/deps/googletest")
 add_subdirectory(${CMAKE_SOURCE_DIR}/deps/googletest)
 include_directories(${CMAKE_SOURCE_DIR}/deps/googletest/googletest/include)
 
-enable_testing()
-
-
+## find other libs
+find_library(LIBIBVERBS NAMES ibverbs)
