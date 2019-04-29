@@ -44,6 +44,7 @@ class Timer {
     start_time_ = std::chrono::steady_clock::now();
   }
 
+  Timer& operator=(Timer&) = default;
  private:
   std::chrono::time_point<std::chrono::steady_clock> start_time_;
 };
