@@ -9,9 +9,8 @@ class Future {
   }
 
   virtual int poll() = 0;
-  int     cor_id;
+  const   int cor_id;
   T       res;
-
 };
 
 }
