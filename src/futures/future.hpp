@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace r2 {
 
 template <typename T>
@@ -8,9 +10,8 @@ class Future {
   explicit Future(int cid) : cor_id(cid) {
   }
 
-  virtual int poll() = 0;
+  virtual T poll(const std::vector<int> &routine_count) = 0;
   const   int cor_id;
-  T       res;
 };
 
 }
