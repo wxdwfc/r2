@@ -11,9 +11,9 @@ ExternalProject_Add( ralloc
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND make install
 )
+set(LIBSSMALLOC_LIBRARIES ${SSMALLOC_INSTALL_DIR}/lib )
 
-include_directories(third_party/rlib)
-
+include_directories(BEFORE ${CMAKE_SOURCE_DIR}/deps)
 
 ## install boost
 set( BOOST_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/boost )
@@ -28,7 +28,7 @@ ExternalProject_Add(libboost1.61
 )
 set(LIBBOOST_HEADERS ${BOOST_INSTALL_DIR}/include )
 set(LIBBOOST_LIBRARIES ${BOOST_INSTALL_DIR}/lib )
-include_directories( BEFORE ${LIBBOOST_HEADERS} )
+include_directories(BEFORE ${LIBBOOST_HEADERS} )
 
 ## install gflags
 set(gflags_DIR "${CMAKE_SOURCE_DIR}/deps/gflags")

@@ -1,4 +1,5 @@
-#include "../deps/rlib/rdma_ctrl.hpp"
+#include <gtest/gtest.h>
+#include "rlib/rdma_ctrl.hpp"
 
 #include <string.h>
 
@@ -38,11 +39,14 @@ TEST(RdmaTest, UDConnect) {
     ASSERT_TRUE(ctrl.qp_factory.register_ud_qp(ud_id,qp));
 
     QPAttr original_attr = qp->get_attr();
-    QPAttr fetched_attr;
+    QPAttr fetched_attr = {};
 
     ASSERT_EQ(QPFactory::fetch_qp_addr(QPFactory::UD,ud_id,std::make_tuple("localhost",tcp_port),
                                        fetched_attr),SUCC);
-    ASSERT_EQ(memcmp(&original_attr,&fetched_attr,sizeof(QPAttr)),0);
+    ASSERT_EQ(fetched_attr.qkey,original_attr.qkey);
+    ASSERT_EQ(fetched_attr.qpn,original_attr.qpn);
+    ASSERT_EQ(fetched_attr.port_id,original_attr.port_id);
+    ASSERT_EQ(fetched_attr.lid,original_attr.lid);
   }
 
   delete test_buffer;
