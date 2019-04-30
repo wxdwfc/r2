@@ -20,7 +20,7 @@ class RpcFuture : public Future<rdmaio::IOStatus> {
       timeout(timeout) {
   }
 
-  rdmaio::IOStatus poll(const std::vector<int> &routine_count) override {
+  rdmaio::IOStatus poll(std::vector<int> &routine_count) override {
     if(routine_count[cor_id] == 0)
       return rdmaio::SUCC;
     if(timer_.passed_msec() >= timeout) {

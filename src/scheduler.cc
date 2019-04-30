@@ -46,6 +46,7 @@ void RScheduler::poll_all() {
     switch((*it)(pending_futures_,cor_id)) {
       case SUCC:
         add(cor_id);                  // add the coroutine back to the scheduler
+        status_[cor_id] = SUCC;
       case EJECT:
         it = poll_futures_.erase(it); // eject this future from the list
         break;
