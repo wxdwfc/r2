@@ -3,10 +3,13 @@
 #include <thread>
 
 #include "../src/futures/rpc_future.hpp"
+#include "../src/rpc/rpc_data.hpp"
 
 using namespace r2;
 using namespace rdmaio;
 using namespace std;
+
+using namespace ::r2::rpc;
 
 namespace test {
 
@@ -26,6 +29,10 @@ TEST(RpcTest, Future) {
   temp[cor_id] = 73;
   this_thread::sleep_for(chrono::microseconds(800));
   ASSERT_EQ(future.poll(temp), TIMEOUT); // this time, the timeout has not reached
+}
+
+TEST(RpcTest, data) {
+  ASSERT_EQ(REQ::sizeof_header(),sizeof(uint64_t));
 }
 
 }; // end namespace test

@@ -38,6 +38,10 @@ class MsgProtocol {
 
   virtual rdmaio::IOStatus flush_pending() = 0;
 
+  virtual int padding() const {
+    return 0;
+  }
+
   // send a message to a destination
   rdmaio::IOStatus send(const Addr &addr, const char *msg,int size) {
     auto ret = send_async(addr, msg, size);

@@ -38,41 +38,48 @@ TEST(Scheduler, rdma) {
   auto all_devices = RNicInfo::query_dev_names();
   ASSERT_FALSE(all_devices.empty());
 
-  // use the first devices found
+  // use the first devices found to create QP, register MR
   RNic nic(all_devices[0]);
   {
+    // start the controler
     RdmaCtrl ctrl(TCP_PORT);
+
+    // register MR
     ASSERT_EQ((ctrl.mr_factory.register_mr(GLOBAL_MR_ID,test_buffer,1024,nic)),SUCC);
 
+    // fetch the register MR's key
     RemoteMemory::Attr local_mr_attr;
     auto ret = RMemoryFactory::fetch_remote_mr(GLOBAL_MR_ID,
                                                std::make_tuple("localhost",TCP_PORT),
                                                local_mr_attr);
     ASSERT_EQ(ret,SUCC);
 
+    // create QP
     RCQP *qp = new RCQP(nic,local_mr_attr,local_mr_attr,QPConfig());
     ASSERT_TRUE(qp->valid());
 
+    // expose QP so as other QP can connect to it
     RDMA_ASSERT(ctrl.qp_factory.register_rc_qp(0,qp));
 
-    // connect the QP
+    // Fetch the QP attr and make QP connected
     QPAttr attr;
     ret = QPFactory::fetch_qp_addr(QPFactory::RC,0,std::make_tuple("localhost",TCP_PORT),
                                    attr);
     ASSERT_EQ(ret,SUCC);
-
     ASSERT_EQ(qp->connect(attr,QPConfig()),SUCC);
 
     // now we try to post one message to myself
-    // ... TODO
+    // initializer the memory
     char *local_buf = test_buffer + 512;
     uint64_t before = Marshal::deserialize<uint64_t>(local_buf);
     ASSERT_NE(before,73);
 
     // we use the coroutine to execute
     RScheduler r;
+    // spawn a coroutine
     r.spawnr([qp,local_buf](handler_t &h, RScheduler &r) {
                auto id = r.cur_id();
+               // really send the requests
                auto ret = RdmaFuture::send_wrapper(r,qp,id,
                                                    {.op = IBV_WR_RDMA_READ,
                                                     .flags = IBV_SEND_SIGNALED,
@@ -86,13 +93,16 @@ TEST(Scheduler, rdma) {
                ret = r.pause_and_yield(h);
                ASSERT_EQ(ret,SUCC);
 
+               // check the value
                uint64_t after = Marshal::deserialize<uint64_t>(local_buf);
                ASSERT_EQ(after,73);
 
                r.stop_schedule();
                routine_ret(h,r);
              });
+    // run all the coroutines
     r.run();
+
     uint64_t res = Marshal::deserialize<uint64_t>(local_buf);
     RDMA_LOG(2) << "finally we got the value: " << res;
 
