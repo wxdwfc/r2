@@ -1,6 +1,7 @@
 #include "rlib/rdma_ctrl.hpp"
 
 #include "ud_msg.hpp"
+#include "ud_iter.hpp"
 
 using namespace rdmaio;
 
@@ -89,6 +90,10 @@ int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
   flush_pending();
   receiver_.post_recvs(qp_,poll_result);
   return poll_result;
+}
+
+IncomingIter UdAdapter::get_iter() {
+  return UDIncomingIter(this);
 }
 
 static ibv_ah *create_ah(UDQP *qp,const QPAttr &attr) {

@@ -11,7 +11,10 @@ enum MsgType {
   REPLY     // RPC reply
 };
 
-class REQ {
+/**
+ * RPC request structure
+ */
+class Req {
  public:
   struct Meta {
     uint8_t cor_id;
@@ -38,6 +41,15 @@ class REQ {
     return sizeof(Header);
   }
 };  // end class RPC data
+
+/**
+ * record the pending reply structures
+ */
+class Reply {
+ public:
+  char *reply_buf;
+  int   reply_count;
+};
 
 } // end namespace rpc
 

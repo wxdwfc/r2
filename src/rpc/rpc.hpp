@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common.hpp"
+#include "../scheduler.hpp"
 #include "rpc_data.hpp"
 
 namespace r2 {
@@ -14,9 +15,9 @@ namespace rpc {
  *  4. an extra(typically not used argument)
  */
 class RPC {
-  typedef std::function<void(RPC &,const REQ::Meta &ctx,const char *,void *)> rpc_func_t;
+  typedef std::function<void(RPC &,const Req::Meta &ctx,const char *,void *)> rpc_func_t;
  public:
-  explicit Rpc(std::shared_ptr<MsgProtocol> msg_handler);
+  explicit RPC(std::shared_ptr<MsgProtocol> msg_handler);
 
   void register_callback(int rpc_id, rpc_func_t callback);
 
@@ -25,13 +26,13 @@ class RPC {
    * Meta-data reserved for each message.
    * It includes a header, and some implementation specific padding
    */
-  rdmaio::IOStatus call(const REQ::Meta &context, int rpc_id, const REQ::Arg &arg);
+  rdmaio::IOStatus call(const Req::Meta &context, int rpc_id, const Req::Arg &arg);
 
-  rdmaio::IOStatus reply(const REQ::Meta &context, char *reply,int size);
+  rdmaio::IOStatus reply(const Req::Meta &context, char *reply,int size);
 
-  rdmaio::IOStatus call_async(const REQ::Meta &context, int rpc_id, const REQ::Arg &arg);
+  rdmaio::IOStatus call_async(const Req::Meta &context, int rpc_id, const Req::Arg &arg);
 
-  rdmaio::IOStatus reply_async(const REQ::Meta &context, char *reply,int size);
+  rdmaio::IOStatus reply_async(const Req::Meta &context, char *reply,int size);
 
   inline rdmaio::IOStatus flush_pending() {
     return msg_handler_->flush_pending();
@@ -43,9 +44,12 @@ class RPC {
   void spawn_recv(RScheduler &s);
 
  private:
-  std::shared_ptr<rdmaio::MsgAdapter> msg_handler_;
+  std::shared_ptr<MsgProtocol>        msg_handler_;
   std::vector<rpc_func_t>             rpc_callbacks_;
   const int                           padding_ = 0;
+
+  // replies
+  std::vector<Reply>                  replies_;
   DISABLE_COPY_AND_ASSIGN(RPC);
 }; // end class RPC
 

@@ -21,6 +21,21 @@ struct Addr {
 };
 typedef uint32_t Addr_id_t;
 
+struct IncomingMsg {
+  char *msg;
+  int   size;
+  Addr  from;
+};
+
+/**
+ * An iterator class so that application can handle in-coming messages
+ */
+class IncomingIter {
+ public:
+  virtual IncomingMsg next() { }
+  virtual bool        has_next() { return false;}
+};
+
 /**
  * The message can have multiple implementations.
  * So we use a virtual class to identify which functions must be implemented
@@ -53,6 +68,8 @@ class MsgProtocol {
   // poll all in-coming msgs
   typedef std::function<void(const char *,int size,const Addr &addr)> msg_callback_t;
   virtual int poll_all(const msg_callback_t &f) = 0;
+
+  virtual IncomingIter get_iter() = 0;
 };
 
 } // end namespace r2

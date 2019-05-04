@@ -1,3 +1,5 @@
+#pragma once
+
 #include "protocol.hpp"
 
 #include <unordered_map>
@@ -7,7 +9,9 @@
 
 namespace r2 {
 
+class UDIncomingIter;
 class UdAdapter : public MsgProtocol {
+  friend class UDIncomingIter;
  public:
   UdAdapter(const Addr &my_addr,rdmaio::UDQP *qp);
 
@@ -18,6 +22,8 @@ class UdAdapter : public MsgProtocol {
   rdmaio::IOStatus flush_pending() override;
 
   int     poll_all(const MsgProtocol::msg_callback_t &f) override;
+
+  IncomingIter get_iter() override;
 
  public:
   const  Addr     my_addr;

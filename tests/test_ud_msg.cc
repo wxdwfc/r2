@@ -72,4 +72,8 @@ TEST(UdMsgTest, simple) {
   }
 } // end test function
 
+TEST(UdMsgTest, iter) {
+  // TODO: implemented
+}
+
 } // end namespace test

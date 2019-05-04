@@ -4,6 +4,7 @@
 
 #include "../src/futures/rpc_future.hpp"
 #include "../src/rpc/rpc_data.hpp"
+#include "../src/rpc/rpc.hpp"
 
 using namespace r2;
 using namespace rdmaio;
@@ -32,7 +33,7 @@ TEST(RpcTest, Future) {
 }
 
 TEST(RpcTest, data) {
-  ASSERT_EQ(REQ::sizeof_header(),sizeof(uint64_t));
+  ASSERT_EQ(Req::sizeof_header(),sizeof(uint64_t));
 }
 
 }; // end namespace test
