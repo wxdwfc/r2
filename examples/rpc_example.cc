@@ -12,9 +12,15 @@ using namespace r2::rpc;
 
 RdmaCtrl ctrl(8888);
 
+/**
+ * Some helper functions for establishing network communication
+ */
 char      *bootstrap_memory(RNic &nic,int mem_size,int mr_id);
 std::shared_ptr<UdAdapter> bootstrap_ud(RNic &nic,int qp_id,int mr_id);
 
+/**
+ * The callback we want to run.
+ */
 void       test_callback(RPC &,const Req::Meta &ctx,const char *,void *);
 
 int main() {
