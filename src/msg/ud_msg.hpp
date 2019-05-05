@@ -23,7 +23,7 @@ class UdAdapter : public MsgProtocol {
 
   int     poll_all(const MsgProtocol::msg_callback_t &f) override;
 
-  IncomingIter get_iter() override;
+  Iter_p_t get_iter() override;
 
  public:
   const  Addr     my_addr;

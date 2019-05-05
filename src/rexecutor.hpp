@@ -4,7 +4,7 @@
 
 namespace r2 {
 
-template <typename STATUS>
+template <typename STATUS = int>
 class RExecutor {
  public:
   static constexpr int kMaxCoroutineSupported = 65;

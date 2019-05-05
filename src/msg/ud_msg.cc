@@ -92,8 +92,8 @@ int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
   return poll_result;
 }
 
-IncomingIter UdAdapter::get_iter() {
-  return UDIncomingIter(this);
+Iter_p_t UdAdapter::get_iter() {
+  return Iter_p_t(new UDIncomingIter(this));
 }
 
 static ibv_ah *create_ah(UDQP *qp,const QPAttr &attr) {

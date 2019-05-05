@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 #include "rlib/common.hpp"
 #include "../common.hpp"
@@ -32,9 +33,12 @@ struct IncomingMsg {
  */
 class IncomingIter {
  public:
-  virtual IncomingMsg next() { }
-  virtual bool        has_next() { return false;}
+  virtual IncomingMsg next() = 0;
+  virtual bool        has_next() = 0;
+  virtual ~IncomingIter() {};
 };
+
+typedef std::unique_ptr<IncomingIter> Iter_p_t;
 
 /**
  * The message can have multiple implementations.
@@ -69,7 +73,7 @@ class MsgProtocol {
   typedef std::function<void(const char *,int size,const Addr &addr)> msg_callback_t;
   virtual int poll_all(const msg_callback_t &f) = 0;
 
-  virtual IncomingIter get_iter() = 0;
+  virtual Iter_p_t get_iter() = 0;
 };
 
 } // end namespace r2
