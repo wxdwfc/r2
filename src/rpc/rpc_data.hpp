@@ -22,10 +22,10 @@ class Req {
   };
 
   struct Arg {
-    const char *buf       = nullptr;
+    const char *send_buf  = nullptr;
     int         len       = 0;
-    int         reply_cnt = 0;
     char       *reply_buf = nullptr;
+    int         reply_cnt = 0;
   };
 
   // internal data structures used in RPC
@@ -45,10 +45,9 @@ class Req {
 /**
  * record the pending reply structures
  */
-class Reply {
- public:
-  char *reply_buf;
-  int   reply_count;
+struct Reply {
+  char *reply_buf   = nullptr;
+  int   reply_count = 0;
 };
 
 } // end namespace rpc

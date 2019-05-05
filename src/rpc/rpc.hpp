@@ -3,6 +3,7 @@
 #include "../common.hpp"
 #include "../scheduler.hpp"
 #include "rpc_data.hpp"
+#include "buf_factory.hpp"
 
 namespace r2 {
 
@@ -43,6 +44,10 @@ class RPC {
    */
   void spawn_recv(RScheduler &s);
 
+  BufFactory get_buf_factory() {
+    return BufFactory(padding_ + sizeof(Req::Header));
+  }
+
  private:
   std::shared_ptr<MsgProtocol>        msg_handler_;
   std::vector<rpc_func_t>             rpc_callbacks_;
@@ -50,6 +55,9 @@ class RPC {
 
   // replies
   std::vector<Reply>                  replies_;
+
+  void sanity_check_reply(const Req::Header *header);
+
   DISABLE_COPY_AND_ASSIGN(RPC);
 }; // end class RPC
 

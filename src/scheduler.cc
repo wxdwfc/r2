@@ -15,9 +15,9 @@ RScheduler::RScheduler() : RExecutor(),
              // poll the completion events
              coro.poll_all();
 
-             if(coro.next_id() != coro.cur_id())
+             if(coro.next_id() != coro.cur_id()) {
                coro.yield_to_next(yield);
-             else {
+             } else {
                // pass
              }
            }
@@ -55,6 +55,7 @@ void RScheduler::poll_all() {
         break;
       case NOT_READY:
         // pass, do nothing
+        it++;
         break;
       default:
         ASSERT(false) << "poll an invalid future return value";

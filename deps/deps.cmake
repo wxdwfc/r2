@@ -4,7 +4,7 @@ include( ExternalProject )
 
 ## install & compile RLib's rmalloc
 set(SSMALLOC_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/rlib)
-ExternalProject_Add( ralloc
+ExternalProject_Add(ralloc
   SOURCE_DIR ${SSMALLOC_INSTALL_DIR}/ralloc
   CONFIGURE_COMMAND mkdir -p  ${SSMALLOC_INSTALL_DIR}/lib
   BUILD_COMMAND make

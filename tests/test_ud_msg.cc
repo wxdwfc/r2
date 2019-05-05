@@ -120,19 +120,13 @@ TEST(UdMsgTest, iter) {
 
     sleep(1);
 
-    auto it = adapter.get_iter();
-    compile_fence();
-#if 1
-    // now we check the message contents
     int received_count = 0;
-    while(it->has_next()) {
-      compile_fence();
+    for(auto it = adapter.get_iter();it->has_next();) {
       auto msg_meta = it->next();
       received_count += 1;
       ASSERT_EQ(msg_meta.from.thread_id,73);
     }
     ASSERT_EQ(received_count,total_msg_count);
-#endif
     // pass the connect phase
   }
   ctrl.mr_factory.deregister_mr(mr_id);

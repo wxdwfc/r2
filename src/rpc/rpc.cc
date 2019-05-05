@@ -37,7 +37,11 @@ IOStatus RPC::call(const Req::Meta &context, int rpc_id, const Req::Arg &arg) {
 }
 
 IOStatus RPC::call_async(const Req::Meta &context, int rpc_id, const Req::Arg &arg) {
-  Req::Header *header = (Req::Header *)(arg.buf - sizeof(Req::Header));
+
+  replies_[context.cor_id].reply_buf = arg.reply_buf;
+  replies_[context.cor_id].reply_count += arg.reply_cnt;
+
+  Req::Header *header = (Req::Header *)(arg.send_buf - sizeof(Req::Header));
   *header = make_rpc_header(REQ, rpc_id, arg.len,context.cor_id);
   return msg_handler_->send_async(context.dest, (char *)header,sizeof(Req::Header) + arg.len);
 }
@@ -55,24 +59,52 @@ IOStatus RPC::reply_async(const Req::Meta &context, char *reply,int size) {
   return msg_handler_->send_async(context.dest, (char *)header,sizeof(Req::Header) + size);
 }
 
+inline void RPC::sanity_check_reply(const Req::Header *header) {
+  ASSERT(header->cor_id < replies_.size());
+  ASSERT(replies_[header->cor_id].reply_count > 0);
+}
+
+/**
+ * spawn a future to handle in-coming req/replies
+ */
 void RPC::spawn_recv(RScheduler &s) {
-  auto  msg_ptr = this->msg_handler_;
-  auto &replies = replies_;
-  s.emplace(0,0,[&s,msg_ptr,&replies](std::vector<int> &routine_count,int &cor_id){
-                  msg_ptr->poll_all([&s,&routine_count,&replies]
-                                    (const char *msg,int size,const Addr &addr) {
-                                      // first we parse the header
-                                      Req::Header *header = (Req::Header *)msg;
-                                      const char *args = msg + sizeof(Req::Header);
-                                      switch (header->type) {
-                                        case REQ:
-                                          break;
-                                        case REPLY:
-                                          break;
-                                        default:
-                                          ASSERT(false);
-                                      }
-                                    });
+  s.emplace(0,0,[&](std::vector<int> &routine_count,int &cor_id){
+                  for(auto it = msg_handler_->get_iter(); it->has_next();) {
+                    auto msg_meta = it->next();
+                    Req::Header *header = (Req::Header *)(msg_meta.msg);
+                    switch (header->type) {
+                      case REQ:
+                        try {
+                          rpc_callbacks_[header->rpc_id](
+                              *this,
+                              {
+                              .cor_id  = header->cor_id,
+                              .dest    = msg_meta.from
+                              },
+                              (char *)(header) + sizeof(Req::Header),
+                            nullptr);
+                        } catch (...) {
+                          LOG(7) << "rpc called failed with rpc id "
+                                 << header->rpc_id;
+                          ASSERT(false);
+                        }
+                        break;
+                      case REPLY: {
+                        sanity_check_reply(header);
+                        memcpy(replies_[header->cor_id].reply_buf,
+                               (char *)(header) + sizeof(Req::Header),
+                               header->payload);
+                        if(--(replies_[header->cor_id].reply_count) == 0) {
+                          s.add(header->cor_id);
+                          s.status_[header->cor_id] = SUCC;
+                        }
+                      }
+                        break;
+                      default:
+                        ASSERT(false);
+                    }
+                  }
+                  flush_pending();
                   return NOT_READY; // this function should never return
                 }
     );

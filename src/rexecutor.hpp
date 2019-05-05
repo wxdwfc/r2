@@ -141,12 +141,13 @@ class RExecutor {
   coro.exit(yield); return;            \
 }
 
+ public:
+  std::vector<STATUS>                 status_;
  protected:
   /**
    * FIXME: may have problem when the capacity is increased
    * + max coroutine supported ?
    */
-  std::vector<STATUS>                 status_;
   std::vector<RoutineLink::Routine>   routines_;
   RoutineLink                         chain_;
   RoutineLink::Routine               *cur_routine_ = nullptr;

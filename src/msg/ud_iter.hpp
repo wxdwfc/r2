@@ -15,6 +15,8 @@ class UDIncomingIter : public IncomingIter {
       auto &wc = adapter->receiver_.wcs_[0];
       LOG_IF(4,wc.status != IBV_WC_SUCCESS) <<
           "poll till completion error: " << wc.status << " " << ibv_wc_status_str(wc.status);
+      // re-set the poll result
+      poll_result = 0;
     }
   }
 

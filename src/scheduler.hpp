@@ -45,6 +45,8 @@ class RScheduler : public RExecutor<rdmaio::IOStatus> {
   void poll_all();
 
   bool                      running_ = true;
+
+  DISABLE_COPY_AND_ASSIGN(RScheduler);
 }; // end class
 
 } // end namespace rdmaio
