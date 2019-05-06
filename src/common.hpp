@@ -1,6 +1,7 @@
 #pragma once
 
 #include "macros.hpp"
+#include "logging.hpp"
 
 namespace r2 {
 
