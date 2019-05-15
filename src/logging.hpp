@@ -73,7 +73,7 @@ enum loglevel {
 #define FILE_LOG(f)                             \
   ::r2::FileLogger(f).stream()
 
-#define FILE_LOG(f,m)                            \
+#define FILE_WRITE(f,m)                            \
   ::r2::FileLogger(f,m).stream()
 
 // a nice progrss printer
