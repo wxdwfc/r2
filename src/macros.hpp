@@ -18,6 +18,17 @@ static inline unsigned long read_tsc(void) {
   return ((unsigned long)a) | (((unsigned long) d) << 32);
 }
 
+class RDTSC {
+ public:
+  RDTSC() : start(read_tsc()) {
+  }
+  unsigned long passed() const {
+    return read_tsc() - start;
+  }
+ private:
+  unsigned long start;
+};
+
 static inline void compile_fence(void) {
   asm volatile("" ::: "memory");
 }
