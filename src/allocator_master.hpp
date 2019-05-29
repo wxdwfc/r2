@@ -46,9 +46,8 @@ class AllocatorMaster {
     extent_hooks_t *new_hooks = &hooks;
     jemallctl("arenas.create", (void *)(&arena_id), &sz,
               (void *)(&new_hooks), sizeof(extent_hooks_t *));
-    //jemallctl("tcache.create", (void *)(&cache_id), &sz, nullptr, 0);
-    //return new Allocator(MALLOCX_ARENA(arena_id) | MALLOCX_TCACHE(cache_id));
-    return new Allocator(MALLOCX_ARENA(arena_id));
+    jemallctl("tcache.create", (void *)(&cache_id), &sz, nullptr, 0);
+    return new Allocator(MALLOCX_ARENA(arena_id) | MALLOCX_TCACHE(cache_id));
   }
 
   static u64 total_managed_mem() {
@@ -57,7 +56,8 @@ class AllocatorMaster {
 
   static bool within_range(ptr_t p) {
     char *c = static_cast<char *>(p);
-    return c >= start_addr && c < end_addr;
+    auto ret = c >= start_addr && c < end_addr;
+    return ret;
   }
 
  public:
