@@ -9,6 +9,11 @@ namespace r2 {
 
 namespace rpc {
 
+/**
+ * First, we reserve 3 RPC for my iternal usage
+ */
+const int RESERVED_RPC_ID = 3;
+
 /** The RPC callback takes 6 parameters:
  *  1. Rpc
  *  2. RPC context (sid,tid,cid)

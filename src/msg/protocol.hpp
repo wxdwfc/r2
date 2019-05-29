@@ -53,6 +53,20 @@ class MsgProtocol {
    */
   virtual rdmaio::IOStatus connect(const Addr &addr,const rdmaio::MacID &id,int opt = 0) = 0;
 
+  /*!
+    Internal connect to a client, given the connect_info
+   */
+  virtual rdmaio::IOStatus connect_from_incoming(const Addr &addr,const rdmaio::Buf_t &connect_info) {
+    return rdmaio::SUCC;
+  }
+
+  /*!
+   * Dis-connect from a client
+   */
+  virtual void disconnect(const Addr &addr) {
+
+  }
+
   virtual rdmaio::IOStatus send_async(const Addr &addr,const char *msg,int size) = 0;
 
   virtual rdmaio::IOStatus flush_pending() = 0;

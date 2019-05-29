@@ -1,7 +1,7 @@
 #pragma once
 
-#include <rlib/ralloc/ralloc.h>
 #include "../logging.hpp"
+#include "../allocator_master.hpp"
 
 namespace r2 {
 
@@ -19,6 +19,7 @@ struct UdConnectInfo {
 struct UdSender {
 
   UdSender(const Addr &addr,uint64_t lkey) {
+
     for(uint i = 0;i < MAX_UD_SEND_DOORBELL;++i) {
       wrs_[i].opcode = IBV_WR_SEND_WITH_IMM;
       wrs_[i].num_sge = 1;
@@ -54,14 +55,17 @@ struct UdSender {
 struct UdReceiver {
 
   UdReceiver(rdmaio::UDQP *qp,int max_msg_size = MAX_UD_PACKET_SIZE) {
-    RThreadLocalInit();
+
+    auto allocator = AllocatorMaster<>::get_thread_allocator();
+    ASSERT(allocator != nullptr);
+
     if(max_msg_size > MAX_UD_PACKET_SIZE)
       max_msg_size = MAX_UD_PACKET_SIZE - GRH_SIZE;
 
     // fill in the default values of recv wrs/sges
     for(uint i = 0;i < MAX_UD_RECV_SIZE;++i) {
       struct ibv_sge sge {
-        .addr   = (uintptr_t)(Rmalloc(max_msg_size)),
+        .addr   = (uintptr_t)allocator->alloc(max_msg_size),
         .length = (uint32_t)max_msg_size,
         .lkey   = qp->local_mem_.key
       };
