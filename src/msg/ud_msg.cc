@@ -92,6 +92,35 @@ int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
   return poll_result;
 }
 
+Buf_t UdAdapter::get_my_conninfo() {
+  QPAttr res = qp_->get_attr();
+  return Marshal::serialize_to_buf(res);
+}
+
+IOStatus UdAdapter::connect_from_incoming(const Addr &addr,const Buf_t &connect_info) {
+  QPAttr attr;
+  if(!Marshal::deserialize(connect_info,attr))
+    return ERR;
+  auto ah = create_ah(qp_,attr);
+  if(ah == nullptr) return ERR;
+
+  UdConnectInfo info = {
+    .address_handler = ah,
+    .remote_qpn      = attr.qpn,
+    .remote_qkey     = attr.qkey
+  };
+  connect_infos_.insert(std::make_pair(addr.to_u32(),info));
+  return SUCC;
+}
+
+void UdAdapter::disconnect(const Addr &addr) {
+  if(connect_infos_.find(addr.to_u32()) != connect_infos_.end()) {
+    auto ah = connect_infos_[addr.to_u32()].address_handler;
+    ibv_destroy_ah(ah);
+    connect_infos_.erase(connect_infos_.find(addr.to_u32()));
+  }
+}
+
 Iter_p_t UdAdapter::get_iter() {
   return Iter_p_t(new UDIncomingIter(this));
 }

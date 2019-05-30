@@ -21,7 +21,7 @@ class AllocatorMaster {
   }
 
   static Allocator *get_thread_allocator() {
-    if(thread_allocator)
+    if(likely(thread_allocator))
       return thread_allocator;
     return thread_allocator = get_allocator();
   }

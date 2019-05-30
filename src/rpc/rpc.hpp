@@ -20,8 +20,17 @@ const int RESERVED_RPC_ID = 3;
  *  3. a pointer to the msg
  *  4. an extra(typically not used argument)
  */
+class RPCHandler;
 class RPC {
-  typedef std::function<void(RPC &,const Req::Meta &ctx,const char *,void *)> rpc_func_t;
+  friend class RPCHandler;
+  /*!
+    An RPC callback takes the following parameter:
+    \param RPC, a reference to the RPC handler itself.
+    \param ctx: the sender's ctx, including sender's corid and its address.
+    \param msg: a pointer to the in-coming message
+    \param size: the buffer of the message size
+   */
+  using rpc_func_t =  std::function<void(RPC &,const Req::Meta &ctx,const char *,u32)>;
  public:
   explicit RPC(std::shared_ptr<MsgProtocol> msg_handler);
 
@@ -43,6 +52,17 @@ class RPC {
   inline rdmaio::IOStatus flush_pending() {
     return msg_handler_->flush_pending();
   }
+
+  /*!
+   * Handshake functions.
+   * Basically, a start hand-shake which has connectinfo,
+   * allow this endpoint to create connect information to the sender.
+   * a stop hand-shake delete the sender's information from the server.
+   */
+  rdmaio::IOStatus start_handshake(const Addr &dest,RScheduler &s,handler_t &h);
+
+  rdmaio::IOStatus end_handshake(const Addr &dest);
+  // xxx
 
   /**
    * Return a future, so that the scheduler can poll it for receiving messages

@@ -17,7 +17,7 @@ enum MsgType {
 class Req {
  public:
   struct Meta {
-    uint8_t cor_id;
+    u8      cor_id;
     Addr    dest;
   };
 
@@ -30,11 +30,11 @@ class Req {
 
   // internal data structures used in RPC
   struct Header {
-    uint32_t type : 2;
-    uint32_t rpc_id :  5;
-    uint32_t payload : 18;
-    uint32_t cor_id     : 7;
-  }  __attribute__ ((aligned (sizeof(uint64_t))));
+    u32 type : 2;
+    u32 rpc_id :  5;
+    u32 payload : 18;
+    u32 cor_id     : 7;
+  }  __attribute__ ((aligned (sizeof(u64))));
 
  public:
   static int sizeof_header(void) {

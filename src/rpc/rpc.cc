@@ -1,5 +1,6 @@
 #include "../common.hpp"
 #include "rpc.hpp"
+#include "rpc_handlers.hpp"
 
 using namespace rdmaio;
 
@@ -7,12 +8,20 @@ namespace r2 {
 
 namespace rpc {
 
+static_assert(END_HS < RESERVED_RPC_ID,"The RPC internal uses too many RPC ids!");
+
 static const int kMaxRPCFuncSupport = 16;
 
 RPC::RPC(std::shared_ptr<MsgProtocol> msg_handler):
     msg_handler_(msg_handler) {
   rpc_callbacks_.resize(kMaxRPCFuncSupport);
   replies_.resize(RExecutor<int>::kMaxCoroutineSupported);
+
+  /**
+   * Register our default RPC handler
+   */
+  register_callback(START_HS,RPCHandler::start_handshake_handler);
+  register_callback(END_HS,RPCHandler::stop_handshake_handler);
 }
 
 void RPC::register_callback(int rpc_id, rpc_func_t callback) {
@@ -64,6 +73,26 @@ inline void RPC::sanity_check_reply(const Req::Header *header) {
   ASSERT(replies_[header->cor_id].reply_count > 0);
 }
 
+rdmaio::IOStatus RPC::start_handshake(const Addr &dest,RScheduler &s,handler_t &h) {
+  auto info     = msg_handler_->get_my_conninfo();
+  char *msg_buf = get_buf_factory().alloc(info.size());
+  memcpy(msg_buf,info.data(),info.size());
+  auto ret = call({.cor_id = s.cur_id(),.dest = dest},START_HS,
+                  {.send_buf = msg_buf,.len = info.size(),.reply_buf = nullptr,.reply_cnt = 1});
+  get_buf_factory().dealloc(msg_buf);
+  if(ret != SUCC)
+    return ret;
+  ret = s.pause_and_yield(h);
+  return ret;
+}
+
+rdmaio::IOStatus RPC::end_handshake(const Addr &dest) {
+  char *msg_buf = get_buf_factory().alloc(0);
+  auto ret = call({.cor_id = 0,.dest = dest},END_HS,
+                  {.send_buf = msg_buf,.len = 0,.reply_buf = nullptr,.reply_cnt = 0});
+  get_buf_factory().dealloc(msg_buf);
+}
+
 /**
  * spawn a future to handle in-coming req/replies
  */
@@ -82,7 +111,7 @@ void RPC::spawn_recv(RScheduler &s) {
                               .dest    = msg_meta.from
                               },
                               (char *)(header) + sizeof(Req::Header),
-                            nullptr);
+                              header->payload);
                         } catch (...) {
                           LOG(7) << "rpc called failed with rpc id "
                                  << header->rpc_id;

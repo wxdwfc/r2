@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <sstream>
 
 #include "rlib/common.hpp"
 #include "../common.hpp"
@@ -9,18 +10,27 @@
 namespace r2 {
 
 struct Addr {
-  uint64_t mac_id : 16;
-  uint64_t thread_id  : 16;
+  u32 mac_id : 16;
+  u32 thread_id  : 16;
 
-  inline uint64_t to_u32() const {
-    return *((uint32_t *)this);
+  inline u64 to_u32() const {
+    return *((u32 *)this);
   }
 
-  inline void from_u32(uint32_t res) {
-    *((uint32_t *)(this)) = res;
+  inline void from_u32(u32 res) {
+    *((u32 *)(this)) = res;
   }
+
+  std::string to_str() const {
+    std::ostringstream oss;
+    oss << "address's mac_id: " << mac_id
+        << "; address's thread: " << thread_id;
+    return oss.str();
+  }
+
 };
-typedef uint32_t Addr_id_t;
+
+using Addr_id_t =  u32;
 
 struct IncomingMsg {
   char *msg;
@@ -38,7 +48,7 @@ class IncomingIter {
   virtual ~IncomingIter() {};
 };
 
-typedef std::unique_ptr<IncomingIter> Iter_p_t;
+using Iter_p_t =  std::unique_ptr<IncomingIter>;
 
 /**
  * The message can have multiple implementations.
@@ -60,11 +70,14 @@ class MsgProtocol {
     return rdmaio::SUCC;
   }
 
+  virtual rdmaio::Buf_t get_my_conninfo() {
+    return rdmaio::Buf_t("");
+  }
+
   /*!
    * Dis-connect from a client
    */
   virtual void disconnect(const Addr &addr) {
-
   }
 
   virtual rdmaio::IOStatus send_async(const Addr &addr,const char *msg,int size) = 0;
@@ -84,7 +97,7 @@ class MsgProtocol {
   }
 
   // poll all in-coming msgs
-  typedef std::function<void(const char *,int size,const Addr &addr)> msg_callback_t;
+  using msg_callback_t =  std::function<void(const char *,int size,const Addr &addr)>;
   virtual int poll_all(const msg_callback_t &f) = 0;
 
   virtual Iter_p_t get_iter() = 0;

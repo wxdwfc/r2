@@ -25,6 +25,15 @@ class UdAdapter : public MsgProtocol {
 
   Iter_p_t get_iter() override;
 
+  /*!
+    Below methods handle connect related works.
+  */
+  rdmaio::Buf_t get_my_conninfo() override;
+
+  rdmaio::IOStatus connect_from_incoming(const Addr &addr,const rdmaio::Buf_t &connect_info);
+
+  void disconnect(const Addr &addr);
+
  public:
   const  Addr     my_addr;
  private:
