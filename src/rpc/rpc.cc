@@ -82,9 +82,7 @@ rdmaio::IOStatus RPC::start_handshake(const Addr &dest,RScheduler &s,handler_t &
   get_buf_factory().dealloc(msg_buf);
   if(ret != SUCC)
     return ret;
-  LOG(4) << "Coroutine " << s.cur_id() << " yield";
   ret = s.pause_and_yield(h);
-  LOG(4) << "Coroutine " << s.cur_id() << " yield back";
   return ret;
 }
 
