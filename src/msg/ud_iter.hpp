@@ -21,6 +21,7 @@ class UDIncomingIter : public IncomingIter {
   }
 
   ~UDIncomingIter() {
+    adapter->receiver_.post_recvs(adapter->qp_,poll_result);
   }
 
   IncomingMsg next() override {
