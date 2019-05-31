@@ -40,6 +40,8 @@ class RScheduler : public RExecutor<rdmaio::IOStatus> {
 
  private:
   std::vector<int>          pending_futures_;
+  // TODO, XD:
+  // Shall we leave the futures per coroutine, instead poll all futures per schedule?
   Futures                   poll_futures_;
 
   void poll_all();
