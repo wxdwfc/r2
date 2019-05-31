@@ -4,8 +4,9 @@ namespace r2 {
 
 static constexpr int scheduler_cid = 0;
 
-RScheduler::RScheduler() : RExecutor(),
-               pending_futures_(1,0) {
+RScheduler::RScheduler() :
+    RExecutor(),
+    pending_futures_(1,0) {
   pending_futures_.reserve(kMaxCoroutineSupported);
 
   spawnr([](handler_t &yield,RScheduler &coro) {
@@ -32,9 +33,11 @@ int RScheduler::spawnr(const RScheduler::routine_t &func) {
 }
 
 void RScheduler::stop_schedule() {
-  ASSERT(cur_routine_ != &(routines_[scheduler_cid]));
-  routines_[scheduler_cid].leave(chain_);
-  running_ = false;
+  if(running_) {
+    ASSERT(cur_routine_ != &(routines_[scheduler_cid]));
+    routines_[scheduler_cid].leave(chain_);
+    running_ = false;
+  }
 }
 
 using namespace rdmaio;
