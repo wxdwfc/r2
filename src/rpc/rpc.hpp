@@ -69,8 +69,14 @@ class RPC {
    */
   void spawn_recv(RScheduler &s);
 
-  BufFactory get_buf_factory() {
+  void poll_all(RScheduler &s,std::vector<int> &routine_count);
+
+  BufFactory alloc_buf_factory() {
     return BufFactory(padding_ + sizeof(Req::Header));
+  }
+
+  BufFactory &get_buf_factory() {
+    return buf_factory_;
   }
 
  private:
@@ -80,6 +86,8 @@ class RPC {
 
   // replies
   std::vector<Reply>                  replies_;
+
+  BufFactory                          buf_factory_;
 
   void sanity_check_reply(const Req::Header *header);
 

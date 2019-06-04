@@ -18,6 +18,8 @@ class RScheduler : public RExecutor<rdmaio::IOStatus> {
 
   RScheduler();
 
+  explicit RScheduler(const routine_t &f);
+
   int spawnr(const routine_t &f);
 
   void emplace(Future<rdmaio::IOStatus> &f) {
@@ -38,13 +40,21 @@ class RScheduler : public RExecutor<rdmaio::IOStatus> {
    */
   void stop_schedule();
 
- private:
+  /*!
+   * Poll all the registered futures.
+   */
+  void poll_all();
+
+  bool is_running() const {
+    return running_;
+  }
+
   std::vector<int>          pending_futures_;
+ private:
   // TODO, XD:
   // Shall we leave the futures per coroutine, instead poll all futures per schedule?
   Futures                   poll_futures_;
 
-  void poll_all();
 
   bool                      running_ = true;
 

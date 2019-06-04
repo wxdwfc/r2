@@ -7,10 +7,13 @@ using namespace rdmaio;
 
 namespace r2 {
 
-UdAdapter::UdAdapter(const Addr &my_addr,UDQP *qp) :
+const int max_idle_num = 1;
+
+UdAdapter::UdAdapter(const Addr &my_addr,UDQP *sqp,UDQP *qp) :
     my_addr(my_addr),
-    qp_(qp),
-    sender_(my_addr,qp->local_mem_.key),
+    send_qp_(sqp),
+    qp_(qp ? qp : sqp),
+    sender_(my_addr,qp_->local_mem_.key),
     receiver_(qp_) {
 }
 
@@ -43,38 +46,39 @@ IOStatus UdAdapter::send_async(const Addr &addr,const char *msg,int size) {
   auto &wr  = sender_.cur_wr();
   auto &sge = sender_.cur_sge();
 
-  auto it = connect_infos_.find(addr.to_u32());
+  const auto &it = connect_infos_.find(addr.to_u32());
   if(unlikely(it == connect_infos_.end()))
     return NOT_CONNECT;
 
   const auto &link_info = it->second;
+
   wr.wr.ud.ah = link_info.address_handler;
   wr.wr.ud.remote_qpn  = link_info.remote_qpn;
   wr.wr.ud.remote_qkey = link_info.remote_qkey;
 
-  wr.send_flags = (qp_->empty() ? IBV_SEND_SIGNALED : 0)
+  wr.send_flags = (send_qp_->empty() ? IBV_SEND_SIGNALED : 0)
                   | ((size < ::rdmaio::MAX_INLINE_SIZE) ? IBV_SEND_INLINE : 0);
 
-  if(qp_->need_poll()) {
-    ibv_wc wc;auto ret = ::rdmaio::QPUtily::wait_completion(qp_->cq_,wc);
+  if(send_qp_->need_poll()) {
+    ibv_wc wc;auto ret = ::rdmaio::QPUtily::wait_completion(send_qp_->cq_,wc);
     ASSERT(ret == SUCC) << "poll UD completion reply error: " << ret;
-    qp_->clear();
+    send_qp_->clear();
   } else {
-    qp_->forward(1);
+    send_qp_->forward(1);
   }
   sge.addr   = (uintptr_t)msg;
   sge.length = size;
-
   // FIXME: we assume that the qp_ is appropriate created,
   // so that it's send queue is larger than MAX_UD_SEND_DOORBELL
-  if((++(sender_.current_window_idx_))
-     > std::min(MAX_UD_SEND_DOORBELL,qp_->max_send_size))
+  sender_.current_window_idx_ += 1;
+  if(sender_.current_window_idx_
+     >= std::min(MAX_UD_SEND_DOORBELL,qp_->max_send_size))
     flush_pending();
   return SUCC;
 }
 
 IOStatus UdAdapter::flush_pending() {
-  return sender_.flush_pending(qp_);
+  return sender_.flush_pending(send_qp_);
 }
 
 int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
@@ -88,7 +92,11 @@ int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
     }
   }
   flush_pending();
-  receiver_.post_recvs(qp_,poll_result);
+  current_idle_recvs_ += poll_result;
+  if(current_idle_recvs_ > max_idle_num) {
+    ASSERT(receiver_.post_recvs(qp_,current_idle_recvs_) == SUCC);
+    current_idle_recvs_ = 0;
+  }
   return poll_result;
 }
 
@@ -109,16 +117,20 @@ IOStatus UdAdapter::connect_from_incoming(const Addr &addr,const Buf_t &connect_
     .remote_qpn      = attr.qpn,
     .remote_qkey     = attr.qkey
   };
+  if(connect_infos_.find(addr.to_u32()) != connect_infos_.end())
+    connect_infos_.erase(connect_infos_.find(addr.to_u32()));
   connect_infos_.insert(std::make_pair(addr.to_u32(),info));
   return SUCC;
 }
 
 void UdAdapter::disconnect(const Addr &addr) {
+#if 1
   if(connect_infos_.find(addr.to_u32()) != connect_infos_.end()) {
     auto ah = connect_infos_[addr.to_u32()].address_handler;
     ibv_destroy_ah(ah);
     connect_infos_.erase(connect_infos_.find(addr.to_u32()));
   }
+#endif
 }
 
 Iter_p_t UdAdapter::get_iter() {

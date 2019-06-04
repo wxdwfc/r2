@@ -13,7 +13,8 @@ static_assert(END_HS < RESERVED_RPC_ID,"The RPC internal uses too many RPC ids!"
 static const int kMaxRPCFuncSupport = 16;
 
 RPC::RPC(std::shared_ptr<MsgProtocol> msg_handler):
-    msg_handler_(msg_handler) {
+    msg_handler_(msg_handler),
+    buf_factory_(padding_ + sizeof(Req::Header)) {
   rpc_callbacks_.resize(kMaxRPCFuncSupport);
   replies_.resize(RExecutor<int>::kMaxCoroutineSupported);
 
@@ -31,10 +32,10 @@ void RPC::register_callback(int rpc_id, rpc_func_t callback) {
 
 static inline Req::Header make_rpc_header(int type,int id,int size,int cid) {
   return {
-    .type    = type,
-    .rpc_id  = id,
-    .payload = size,
-    .cor_id  = cid
+    .type    = static_cast<u32>(type),
+    .rpc_id  = static_cast<u32>(id),
+    .payload = static_cast<u32>(size),
+    .cor_id  = static_cast<u32>(cid)
   };
 }
 
@@ -70,7 +71,8 @@ IOStatus RPC::reply_async(const Req::Meta &context, char *reply,int size) {
 
 inline void RPC::sanity_check_reply(const Req::Header *header) {
   ASSERT(header->cor_id < replies_.size());
-  ASSERT(replies_[header->cor_id].reply_count > 0);
+  ASSERT(replies_[header->cor_id].reply_count > 0)<< "receive overflow reply for :"
+                                                  << (int)(header->cor_id);
 }
 
 rdmaio::IOStatus RPC::start_handshake(const Addr &dest,RScheduler &s,handler_t &h) {
@@ -80,8 +82,9 @@ rdmaio::IOStatus RPC::start_handshake(const Addr &dest,RScheduler &s,handler_t &
   auto ret = call({.cor_id = s.cur_id(),.dest = dest},START_HS,
                   {.send_buf = msg_buf,.len = info.size(),.reply_buf = nullptr,.reply_cnt = 1});
   get_buf_factory().dealloc(msg_buf);
-  if(ret != SUCC)
+  if(ret != SUCC) {
     return ret;
+  }
   ret = s.pause_and_yield(h);
   return ret;
 }
@@ -96,44 +99,42 @@ rdmaio::IOStatus RPC::end_handshake(const Addr &dest) {
 /**
  * spawn a future to handle in-coming req/replies
  */
+void RPC::poll_all(RScheduler &s,std::vector<int> &routine_count) {
+  msg_handler_->poll_all(
+      [&](const char *msg,int size,const Addr &addr) {
+        Req::Header *header = (Req::Header *)(msg);
+        if(header->type == REQ) {
+            try {
+              rpc_callbacks_[header->rpc_id](
+                  *this,
+                  {
+                    .cor_id  = header->cor_id,
+                    .dest    = addr
+                  },
+                  (char *)(header) + sizeof(Req::Header),
+                  header->payload);
+            } catch (...) {
+              LOG(7) << "rpc called failed with rpc id "
+                     << header->rpc_id;
+              ASSERT(false);
+            }
+        } else if (header->type == REPLY) {
+            sanity_check_reply(header);
+            memcpy(replies_[header->cor_id].reply_buf,
+                   (char *)(header) + sizeof(Req::Header),
+                   header->payload);
+            if(--(replies_[header->cor_id].reply_count) == 0) {
+              s.add(header->cor_id);
+              s.status_[header->cor_id] = SUCC;
+            }
+          } else
+            ASSERT(false) << "receive wrong rpc id:" << (int)header->type;
+      });
+}
+
 void RPC::spawn_recv(RScheduler &s) {
   s.emplace(0,0,[&](std::vector<int> &routine_count,int &cor_id){
-                  for(auto it = msg_handler_->get_iter(); it->has_next();) {
-                    auto msg_meta = it->next();
-                    Req::Header *header = (Req::Header *)(msg_meta.msg);
-                    switch (header->type) {
-                      case REQ:
-                        try {
-                          rpc_callbacks_[header->rpc_id](
-                              *this,
-                              {
-                              .cor_id  = header->cor_id,
-                              .dest    = msg_meta.from
-                              },
-                              (char *)(header) + sizeof(Req::Header),
-                              header->payload);
-                        } catch (...) {
-                          LOG(7) << "rpc called failed with rpc id "
-                                 << header->rpc_id;
-                          ASSERT(false);
-                        }
-                        break;
-                      case REPLY: {
-                        sanity_check_reply(header);
-                        memcpy(replies_[header->cor_id].reply_buf,
-                               (char *)(header) + sizeof(Req::Header),
-                               header->payload);
-                        if(--(replies_[header->cor_id].reply_count) == 0) {
-                          s.add(header->cor_id);
-                          s.status_[header->cor_id] = SUCC;
-                        }
-                      }
-                        break;
-                      default:
-                        ASSERT(false);
-                    }
-                  }
-                  flush_pending();
+                  poll_all(s,routine_count);
                   return NOT_READY; // this function should never return
                 }
     );

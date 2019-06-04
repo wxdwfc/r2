@@ -13,7 +13,8 @@ class Allocator {
   }
 
   inline ptr_t alloc(u32 size) {
-    return jemallocx(size,id);
+    auto ptr = jemallocx(size,id);
+    return ptr;
   }
 
   inline void free(ptr_t ptr) {

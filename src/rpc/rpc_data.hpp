@@ -7,7 +7,7 @@ namespace r2 {
 namespace rpc {
 
 enum MsgType {
-  REQ = 0,  // RPC request
+  REQ = 1,  // RPC request
   REPLY     // RPC reply
 };
 

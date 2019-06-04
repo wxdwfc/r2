@@ -56,6 +56,7 @@ struct UdReceiver {
 
   UdReceiver(rdmaio::UDQP *qp,int max_msg_size = MAX_UD_PACKET_SIZE) {
 
+    ASSERT(qp != nullptr);
     auto allocator = AllocatorMaster<>::get_thread_allocator();
     ASSERT(allocator != nullptr);
 
@@ -91,8 +92,10 @@ struct UdReceiver {
   int recv_head_ = 0;
 
   rdmaio::IOStatus post_recvs(rdmaio::UDQP *qp,int num) {
+
     if(unlikely(num <= 0))
       return rdmaio::SUCC;
+
     auto tail = recv_head_ + num - 1;
     if(tail >= MAX_UD_RECV_SIZE)
       tail -= MAX_UD_RECV_SIZE;
@@ -105,8 +108,8 @@ struct UdReceiver {
       LOG(4) << "post recv " << num << "; w error: " << strerror(errno);
       return rdmaio::ERR;
     }
-    recv_head_ = (tail + 1) % MAX_UD_RECV_SIZE;
     (rrs_ + tail)->next = temp;
+    recv_head_ = (tail + 1) % MAX_UD_RECV_SIZE;
     return rdmaio::SUCC;
   }
 };

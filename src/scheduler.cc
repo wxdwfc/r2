@@ -4,26 +4,28 @@ namespace r2 {
 
 static constexpr int scheduler_cid = 0;
 
-RScheduler::RScheduler() :
+RScheduler::RScheduler(const routine_t &f) :
     RExecutor(),
     pending_futures_(1,0) {
-  pending_futures_.reserve(kMaxCoroutineSupported);
+  spawnr(f);
+}
 
-  spawnr([](handler_t &yield,RScheduler &coro) {
+RScheduler::RScheduler() :
+    RScheduler([](handler_t &yield,RScheduler &coro) {
 
-           while(coro.running_) {
+                 while(coro.running_) {
 
-             // poll the completion events
-             coro.poll_all();
+                   // poll the completion events
+                   coro.poll_all();
 
-             if(coro.next_id() != coro.cur_id()) {
-               coro.yield_to_next(yield);
-             } else {
-               // pass
-             }
-           }
-           routine_ret(yield,coro);
-         });
+                   if(coro.next_id() != coro.cur_id()) {
+                     coro.yield_to_next(yield);
+                   } else {
+                     // pass
+                   }
+                 }
+                 routine_ret(yield,coro);
+               }) {
 }
 
 int RScheduler::spawnr(const RScheduler::routine_t &func) {
@@ -49,7 +51,7 @@ void RScheduler::poll_all() {
     switch((*it)(pending_futures_,cor_id)) {
       case SUCC:
         add(cor_id);                  // add the coroutine back to the scheduler
-        status_[cor_id] = SUCC;
+        //status_[cor_id] = SUCC;
       case EJECT:
         it = poll_futures_.erase(it); // eject this future from the list
         break;

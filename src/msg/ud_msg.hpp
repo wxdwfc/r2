@@ -13,7 +13,7 @@ class UDIncomingIter;
 class UdAdapter : public MsgProtocol {
   friend class UDIncomingIter;
  public:
-  UdAdapter(const Addr &my_addr,rdmaio::UDQP *qp);
+  UdAdapter(const Addr &my_addr,rdmaio::UDQP *sqp,rdmaio::UDQP *qp = nullptr);
 
   rdmaio::IOStatus connect(const Addr &addr,const rdmaio::MacID &id,int i) override;
 
@@ -37,12 +37,16 @@ class UdAdapter : public MsgProtocol {
  public:
   const  Addr     my_addr;
  private:
-  rdmaio::UDQP *qp_ = nullptr;
+  // QP to receive requests
+  rdmaio::UDQP *qp_      = nullptr;
+  rdmaio::UDQP *send_qp_ = nullptr;
 
   std::unordered_map<Addr_id_t,UdConnectInfo> connect_infos_;
 
   UdSender                                    sender_;
   UdReceiver                                  receiver_;
+
+  int current_idle_recvs_ = 0;
 
   DISABLE_COPY_AND_ASSIGN(UdAdapter);
 }; // end class UdAdapter
