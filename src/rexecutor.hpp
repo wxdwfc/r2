@@ -99,7 +99,7 @@ class RExecutor {
   /**
    * return the current in-execute coroutine id
    */
-  inline int cur_id() const {
+  inline u8 cur_id() const {
     return cur_routine_->id_;
   }
 

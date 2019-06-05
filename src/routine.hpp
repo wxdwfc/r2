@@ -1,6 +1,7 @@
 #pragma once
 
 #include "logging.hpp"
+#include "common.hpp"
 
 #include <vector>
 #include <functional>
@@ -20,7 +21,7 @@ class RoutineLink {
 
   class Routine {
    public:
-    Routine(int id,std::shared_ptr<internal_routine_t> &f) :
+    Routine(u8 id,std::shared_ptr<internal_routine_t> &f) :
         id_(id), func_(*f),
         unwrapperd_fuc_(f) {
     }
@@ -48,7 +49,7 @@ class RoutineLink {
     Routine            *prev_routine_ = nullptr;
     Routine            *next_routine_ = nullptr;
     bool                active_ = false;
-    const int           id_;
+    const u8            id_;
     std::shared_ptr<internal_routine_t> unwrapperd_fuc_;
   }; // end class Routine
 
