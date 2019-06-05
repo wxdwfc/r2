@@ -35,6 +35,22 @@ class RScheduler : public RExecutor<rdmaio::IOStatus> {
     poll_futures_.push_back(f);
   }
 
+  /*!
+    Pause with a timeout
+    \param timeout: timeout in meconds
+  */
+  inline rdmaio::IOStatus pause_to(handler_t &yield,double timeout) {
+    Timer t;
+    while(true) {
+      yield_to_next(yield);
+      if(pending_futures_[cur_id()] == 0)
+        return rdmaio::SUCC;
+      if(t.passed_msec() > timeout) {
+        return rdmaio::TIMEOUT;
+      }
+    }
+  }
+
   /**
    * Stop & resume scheduling coroutines
    */

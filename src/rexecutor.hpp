@@ -1,6 +1,7 @@
 #pragma once
 
 #include "routine.hpp"
+#include "timer.hpp"
 
 namespace r2 {
 
@@ -59,7 +60,8 @@ class RExecutor {
    * add a pre-spawned coroutine back to the list
    */
   inline void add(int cor_id) {
-    chain_.append(&(routines_[cor_id]));
+    if(likely(!routines_[cor_id].active_))
+      chain_.append(&(routines_[cor_id]));
   }
 
   /**
@@ -116,6 +118,13 @@ class RExecutor {
     cur_routine_ = cur_routine_->leave(chain_);
     cur_routine_->execute(yield);
     return status_[cur_routine_->id_];
+  }
+
+  /**
+   * A simplified version of pause
+   */
+  inline STATUS pause(handler_t &yield) {
+    return pause_and_yield(yield);
   }
 
   /**
