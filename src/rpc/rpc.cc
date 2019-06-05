@@ -119,6 +119,7 @@ void RPC::poll_all(RScheduler &s,std::vector<int> &routine_count) {
               ASSERT(false);
             }
         } else if (header->type == REPLY) {
+
             sanity_check_reply(header);
             memcpy(replies_[header->cor_id].reply_buf,
                    (char *)(header) + sizeof(Req::Header),

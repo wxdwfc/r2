@@ -27,7 +27,6 @@ TEST(Scheduler, id) {
   r.run();
 }
 
-
 TEST(Scheduler, rdma) {
   // test whether RSCheduler can scheduler RDMA requests
 
