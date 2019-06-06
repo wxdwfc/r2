@@ -12,8 +12,8 @@ const int GRH_SIZE             = 40;
 
 struct UdConnectInfo {
   ibv_ah  *address_handler = nullptr;
-  int      remote_qpn      = 0;
-  int      remote_qkey     = 0;
+  u64      remote_qpn      = 0;
+  u64      remote_qkey     = 0;
 };
 
 struct UdSender {

@@ -60,11 +60,12 @@ class FastRandom {
     this->seed = (seed ^ 0x5DEECE66DL) & ((1L << 48) - 1);
   }
 
-  inline uint64_t rand_number(int min,int max) {
-    return check_between_inclusive( (uint64_t)(next_uniform() * (max - min + 1) + min),min,max);
+  template <typename T = i64>
+  inline i64 rand_number(T min,T max) {
+    return check_between_inclusive((i64)(next_uniform() * (max - min + 1) + min),min,max);
   }
 
-  inline uint64_t check_between_inclusive(uint64_t v,uint64_t min,uint64_t max) {
+  inline i64 check_between_inclusive(i64 v,i64 min,i64 max) {
     assert(v >= min);
     assert(v <= max);
     return v;
