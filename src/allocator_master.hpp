@@ -1,6 +1,7 @@
 #pragma once
 
 #include "allocator.hpp"
+#include "logging.hpp"
 
 #include <mutex>
 #include <functional>
@@ -12,8 +13,10 @@ class AllocatorMaster {
  public:
   static  void init(char *mem,u64 mem_size) {
     std::lock_guard<std::mutex> guard(lock);
-    if(total_managed_mem() != 0)
+    if(total_managed_mem() != 0) {
+      LOG(2) << "AllocatorMaster<" << NAME << "> inited multiple times";
       return;
+    }
 
     start_addr = mem;
     end_addr   = start_addr + mem_size;
