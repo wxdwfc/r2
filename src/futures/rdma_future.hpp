@@ -45,15 +45,16 @@ class RdmaFuture : public Future<rdmaio::IOStatus> {
                            ASSERT(routine_count[cor_id] > 0);
                            //  we decrease the routine counter here
                            routine_count[cor_id] -= 1;
-                           if(routine_count[cor_id] == 0)
-                             return rdmaio::SUCC;
-                           return rdmaio::EJECT;
                          } else if (cor_id == 0)
                            return rdmaio::NOT_READY;
                          else {
                            // TODO: fix error cases
                            return rdmaio::ERR;
                          }
+
+                         if(routine_count[cor_id] == 0)
+                           return rdmaio::SUCC;
+                         return rdmaio::NOT_READY;
                        });
   }
 
