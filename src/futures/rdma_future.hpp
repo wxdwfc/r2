@@ -36,6 +36,27 @@ class RdmaFuture : public Future<rdmaio::IOStatus> {
     }
   }
 
+  static void spawn_future(RScheduler &s,rdmaio::RCQP *qp,int num = 1) {
+    s.emplace(s.cur_id(),num,[qp](std::vector<int> &routine_count,int &cor_id) {
+                         ibv_wc wc;
+
+                         if((cor_id = qp->poll_one_comp(wc)) > 0) {
+                           ASSERT(routine_count.size() > cor_id);
+                           ASSERT(routine_count[cor_id] > 0);
+                           //  we decrease the routine counter here
+                           routine_count[cor_id] -= 1;
+                           if(routine_count[cor_id] == 0)
+                             return rdmaio::SUCC;
+                           return rdmaio::EJECT;
+                         } else if (cor_id == 0)
+                           return rdmaio::NOT_READY;
+                         else {
+                           // TODO: fix error cases
+                           return rdmaio::ERR;
+                         }
+                       });
+  }
+
   static rdmaio::IOStatus send_wrapper(RScheduler &s,rdmaio::RCQP *qp,int cor_id,
                                        const rdmaio::RCQP::ReqMeta &meta,
                                        const rdmaio::RCQP::ReqContent &req) {
@@ -43,24 +64,7 @@ class RdmaFuture : public Future<rdmaio::IOStatus> {
     auto res = qp->send(meta,req);
 
     if(likely(res == rdmaio::SUCC))
-      s.emplace(cor_id,1,[qp](std::vector<int> &routine_count,int &cor_id){
-              ibv_wc wc;
-
-              if((cor_id = qp->poll_one_comp(wc)) > 0) {
-                ASSERT(routine_count.size() > cor_id);
-                ASSERT(routine_count[cor_id] > 0);
-                //  we decrease the routine counter here
-                routine_count[cor_id] -= 1;
-                if(routine_count[cor_id] == 0)
-                  return rdmaio::SUCC;
-                return rdmaio::EJECT;
-              } else if (cor_id == 0)
-                return rdmaio::NOT_READY;
-              else {
-                // TODO: fix error cases
-                return rdmaio::ERR;
-              }
-            });
+      spawn_future(s,qp,1);
     return res;
   }
 
