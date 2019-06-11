@@ -121,13 +121,6 @@ class RExecutor {
   }
 
   /**
-   * A simplified version of pause
-   */
-  inline STATUS pause(handler_t &yield) {
-    return pause_and_yield(yield);
-  }
-
-  /**
    * yield to next routine
    */
   inline void yield_to_next(handler_t &yield) {

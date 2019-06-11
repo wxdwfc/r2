@@ -51,6 +51,11 @@ class RScheduler : public RExecutor<rdmaio::IOStatus> {
     }
   }
 
+  void pause(handler_t &yield) {
+    if(pending_futures_[cur_id()] > 0)
+      pause_and_yield(yield);
+  }
+
   /**
    * Stop & resume scheduling coroutines
    */

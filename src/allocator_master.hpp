@@ -14,7 +14,6 @@ class AllocatorMaster {
     std::lock_guard<std::mutex> guard(lock);
     if(total_managed_mem() != 0)
       return;
-
     start_addr = mem;
     end_addr   = start_addr + mem_size;
     heap_top   = start_addr;
@@ -48,6 +47,7 @@ class AllocatorMaster {
               (void *)(&new_hooks), sizeof(extent_hooks_t *));
     jemallctl("tcache.create", (void *)(&cache_id), &sz, nullptr, 0);
     return new Allocator(MALLOCX_ARENA(arena_id) | MALLOCX_TCACHE(cache_id));
+    //return new Allocator(MALLOCX_ARENA(arena_id));
   }
 
   static u64 total_managed_mem() {

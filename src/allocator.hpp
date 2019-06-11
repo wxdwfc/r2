@@ -14,6 +14,7 @@ class Allocator {
 
   inline ptr_t alloc(u32 size) {
     auto ptr = jemallocx(size,id);
+    //LOG(4) << "jemalloc sz: " << size << " ptr: " << ptr;
     return ptr;
   }
 

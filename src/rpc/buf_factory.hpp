@@ -22,13 +22,14 @@ class BufFactory {
   char *alloc(int size) const {
     //char *ptr = (char *)Rmalloc(size + extra_padding);
     char *ptr = (char *)(AllocatorMaster<>::get_thread_allocator()->alloc(size + extra_padding));
+    //LOG(4) << "alloc ptr: " << (void *)ptr << " for sz: " << size;
     if(likely(ptr != nullptr))
       return ptr + extra_padding;
     return nullptr;
   }
 
   void  dealloc(char *ptr) const {
-    (AllocatorMaster<>::get_thread_allocator()->free(ptr));
+    (AllocatorMaster<>::get_thread_allocator()->free(ptr - extra_padding));
   }
 
   char *get_inline_buf(int idx = 0) {
