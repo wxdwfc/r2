@@ -49,7 +49,7 @@ struct UdSender {
   ibv_send_wr wrs_[MAX_UD_SEND_DOORBELL];
   ibv_sge     sges_[MAX_UD_SEND_DOORBELL];
 
-  int current_window_idx_ = 0;
+  uint current_window_idx_ = 0;
 };
 
 struct UdReceiver {

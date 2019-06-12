@@ -71,8 +71,9 @@ IOStatus RPC::reply_async(const Req::Meta &context, char *reply,int size) {
 
 inline void RPC::sanity_check_reply(const Req::Header *header) {
   ASSERT(header->cor_id < replies_.size());
-  ASSERT(replies_[header->cor_id].reply_count > 0)<< "receive overflow reply for :"
-                                                  << (int)(header->cor_id);
+  //ASSERT(replies_[header->cor_id].reply_count > 0)<< "receive overflow reply for :"
+  //                                              << (int)(header->cor_id);
+  assert(replies_[header->cor_id].reply_count > 0);
 }
 
 rdmaio::IOStatus RPC::start_handshake(const Addr &dest,RScheduler &s,handler_t &h) {

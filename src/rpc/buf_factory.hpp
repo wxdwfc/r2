@@ -7,16 +7,17 @@ namespace r2 {
 
 namespace rpc {
 
-const int MAX_INLINE_SIZE = 64;
-const int MAX_ROLLING_IDX = 64;
+const uint MAX_INLINE_SIZE = 64;
+const uint MAX_ROLLING_IDX = 512;
 
 class BufFactory {
-  struct rpc_buf_t {
-    char data[MAX_INLINE_SIZE];
-  };
-
  public:
   explicit BufFactory(int padding) : extra_padding(padding) {
+    for(uint i = 0;i < MAX_ROLLING_IDX; ++i) {
+      char *buf = alloc(MAX_INLINE_SIZE + extra_padding);
+      ASSERT(buf != nullptr);
+      inline_bufs.push_back(buf);
+    }
   }
 
   char *alloc(int size) const {
@@ -33,7 +34,8 @@ class BufFactory {
   }
 
   char *get_inline_buf(int idx = 0) {
-    return &inline_bufs[idx * MAX_INLINE_SIZE] + extra_padding;
+    //return &inline_bufs[idx * MAX_INLINE_SIZE] + extra_padding;
+    return inline_bufs[idx] + extra_padding;
   }
 
   char *get_inline() {
@@ -42,8 +44,8 @@ class BufFactory {
   }
 
  private:
-  const int extra_padding = 0; // extra padding used for each message
-  char      inline_bufs[MAX_INLINE_SIZE * MAX_ROLLING_IDX];
+  const int           extra_padding = 0; // extra padding used for each message
+  std::vector<char *> inline_bufs;
   u16       rolling_idx_ = 0;
 }; // end class
 
