@@ -8,7 +8,7 @@ namespace r2 {
 namespace rpc {
 
 const uint MAX_INLINE_SIZE = 64;
-const uint MAX_ROLLING_IDX = 512;
+const uint MAX_ROLLING_IDX = 1024;
 
 class BufFactory {
  public:
