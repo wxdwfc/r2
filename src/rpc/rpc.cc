@@ -124,6 +124,8 @@ void RPC::poll_all(RScheduler &s,std::vector<int> &routine_count) {
             memcpy(replies_[header->cor_id].reply_buf,
                    (char *)(header) + sizeof(Req::Header),
                    header->payload);
+            replies_[header->cor_id].reply_buf += header->payload;
+
             if(--(replies_[header->cor_id].reply_count) == 0) {
               s.add(header->cor_id);
               s.status_[header->cor_id] = SUCC;
