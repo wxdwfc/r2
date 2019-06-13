@@ -12,8 +12,8 @@ const int GRH_SIZE             = 40;
 
 struct UdConnectInfo {
   ibv_ah  *address_handler = nullptr;
-  int      remote_qpn      = 0;
-  int      remote_qkey     = 0;
+  u64      remote_qpn      = 0;
+  u64      remote_qkey     = 0;
 };
 
 struct UdSender {
@@ -49,7 +49,7 @@ struct UdSender {
   ibv_send_wr wrs_[MAX_UD_SEND_DOORBELL];
   ibv_sge     sges_[MAX_UD_SEND_DOORBELL];
 
-  int current_window_idx_ = 0;
+  uint current_window_idx_ = 0;
 };
 
 struct UdReceiver {

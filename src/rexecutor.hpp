@@ -1,6 +1,7 @@
 #pragma once
 
 #include "routine.hpp"
+#include "timer.hpp"
 
 namespace r2 {
 
@@ -59,7 +60,8 @@ class RExecutor {
    * add a pre-spawned coroutine back to the list
    */
   inline void add(int cor_id) {
-    chain_.append(&(routines_[cor_id]));
+    if(likely(!routines_[cor_id].active_))
+      chain_.append(&(routines_[cor_id]));
   }
 
   /**
@@ -97,7 +99,7 @@ class RExecutor {
   /**
    * return the current in-execute coroutine id
    */
-  inline int cur_id() const {
+  inline u8 cur_id() const {
     return cur_routine_->id_;
   }
 

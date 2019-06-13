@@ -51,6 +51,7 @@ class AllocatorMaster {
               (void *)(&new_hooks), sizeof(extent_hooks_t *));
     jemallctl("tcache.create", (void *)(&cache_id), &sz, nullptr, 0);
     return new Allocator(MALLOCX_ARENA(arena_id) | MALLOCX_TCACHE(cache_id));
+    //return new Allocator(MALLOCX_ARENA(arena_id));
   }
 
   static u64 total_managed_mem() {
