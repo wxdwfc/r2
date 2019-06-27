@@ -35,7 +35,7 @@ int RScheduler::spawnr(const RScheduler::routine_t &func) {
 }
 
 void RScheduler::stop_schedule() {
-  if(running_) {
+  if(running_ && poll_futures_.size() == 1) {
     //ASSERT(cur_routine_ != &(routines_[scheduler_cid]));
     routines_[scheduler_cid].leave(chain_);
     running_ = false;

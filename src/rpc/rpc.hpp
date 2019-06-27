@@ -75,6 +75,10 @@ class RPC {
     return BufFactory(padding_ + sizeof(Req::Header));
   }
 
+  inline int reserved_header_sz() const {
+    return padding_ + sizeof(Req::Header);
+  }
+
   BufFactory &get_buf_factory() {
     return buf_factory_;
   }

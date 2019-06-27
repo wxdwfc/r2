@@ -17,6 +17,7 @@ class AllocatorMaster {
     start_addr = mem;
     end_addr   = start_addr + mem_size;
     heap_top   = start_addr;
+    LOG(4) << "allocator master register memory: " << total_managed_mem();
   }
 
   static Allocator *get_thread_allocator() {
@@ -26,9 +27,6 @@ class AllocatorMaster {
   }
 
   static Allocator *get_allocator() {
-
-    using namespace std;
-    using namespace std::placeholders;
 
     /**
      * First we make sanity check on whether AllocatorMaster is initialized
