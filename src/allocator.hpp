@@ -12,9 +12,8 @@ class Allocator {
   explicit Allocator(unsigned id) : id(id) {
   }
 
-  inline ptr_t alloc(u32 size) {
-    auto ptr = jemallocx(size,id);
-    //LOG(4) << "jemalloc sz: " << size << " ptr: " << ptr;
+  inline ptr_t alloc(u32 size,int flag = 0) {
+    auto ptr = jemallocx(size,id | flag);
     return ptr;
   }
 
