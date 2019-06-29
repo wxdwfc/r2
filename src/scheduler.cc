@@ -14,7 +14,6 @@ RScheduler::RScheduler() :
     RScheduler([](handler_t &yield,RScheduler &coro) {
 
                  while(coro.running_) {
-
                    // poll the completion events
                    coro.poll_all();
 
@@ -35,7 +34,9 @@ int RScheduler::spawnr(const RScheduler::routine_t &func) {
 }
 
 void RScheduler::stop_schedule() {
-  if(running_ && poll_futures_.size() == 1) {
+  // To ask, why poll_futures_.size() == 1?
+  // if(running_ && poll_futures_.size() == 1) {
+  if(running_) {
     //ASSERT(cur_routine_ != &(routines_[scheduler_cid]));
     routines_[scheduler_cid].leave(chain_);
     running_ = false;
