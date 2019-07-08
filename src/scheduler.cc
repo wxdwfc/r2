@@ -19,9 +19,7 @@ RScheduler::RScheduler() :
 
                    if(coro.next_id() != coro.cur_id()) {
                      coro.yield_to_next(yield);
-                   } else {
-                     // pass
-                   }
+                   } 
                  }
                  routine_ret(yield,coro);
                }) {
