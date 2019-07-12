@@ -83,6 +83,10 @@ class RPC {
     return buf_factory_;
   }
 
+  int get_rpc_padding() const {
+    return padding_ + sizeof(Req::Header);
+  }
+
  private:
   std::shared_ptr<MsgProtocol>        msg_handler_;
   std::vector<rpc_func_t>             rpc_callbacks_;

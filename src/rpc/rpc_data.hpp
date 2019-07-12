@@ -23,9 +23,9 @@ class Req {
 
   struct Arg {
     const char *send_buf  = nullptr;
-    int         len       = 0;
+    u32         len       = 0;
     char       *reply_buf = nullptr;
-    int         reply_cnt = 0;
+    u32         reply_cnt = 0;
   };
 
   // internal data structures used in RPC

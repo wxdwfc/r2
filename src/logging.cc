@@ -51,9 +51,9 @@ DisplayLogger::~DisplayLogger() {
   if(level_ >= ROCC_LOG_LEVEL) {
     stream_ << "\n";
     std::cout << "\033[" << RTX_DEBUG_LEVEL_COLOR[std::min(level_,6)] << "m"
-              << stream_.str() << EndcolorFlag();
+              << stream_.str() << EndcolorFlag() << std::flush;
     if(level_ >= LOG_FATAL)
-      abort();
+      abort(); 
   }
 }
 

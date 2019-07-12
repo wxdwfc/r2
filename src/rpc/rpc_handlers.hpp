@@ -22,7 +22,7 @@ class RPCHandler {
   static void start_handshake_handler(RPC &rpc,const Req::Meta &ctx,const char *msg,u32 size) {
 
     DISPLAY(2) << "At [" << cur_time() << "]: " <<
-        "receive start handsake from: (" << ctx.dest.to_str() << ")";
+        "receive start handshake from: (" << ctx.dest.to_str() << ")";
 
     Buf_t info = Buf_t(msg,size);
     if(rpc.msg_handler_->connect_from_incoming(ctx.dest,info) != SUCC) {
@@ -34,7 +34,7 @@ class RPCHandler {
 
   static void stop_handshake_handler(RPC &rpc,const Req::Meta &ctx,const char *msg,u32 size) {
     DISPLAY(2) << "At [" << cur_time() << "]: "
-               << "receive stop handsake from: " << ctx.dest.to_str();
+               << "receive stop handshake from: " << ctx.dest.to_str();
     rpc.msg_handler_->disconnect(ctx.dest);
   }
 
