@@ -91,6 +91,6 @@ private:
   DISABLE_COPY_AND_ASSIGN(RScheduler);
 }; // end class
 
-#include "scheduler_marocs.hpp"
-
 } // namespace r2
+
+#include "scheduler_marocs.hpp"
