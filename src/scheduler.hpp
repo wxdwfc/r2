@@ -11,9 +11,11 @@
 namespace r2
 {
 
-#ifndef R2_ASYNC
-#define R2_ASYNC RScheduler &r, handler_t &yield
-#endif
+#define R2_ASYNC RScheduler &_r, handler_t &yield
+
+#define R2_YIELD r_.yield_to_next(yield);
+
+#define R2_RET routine_ret(yield, r_);
 
 class RScheduler : public RExecutor<rdmaio::IOStatus>
 {

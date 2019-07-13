@@ -20,11 +20,11 @@ TEST(Scheduler, id)
   RScheduler r;
   for (uint i = 0; i < 12; ++i)
   {
-    r.spawnr([i](R2_ASYNC) {
-      r.stop_schedule();
-      ASSERT_EQ(i + 1, r.cur_id());
-      r.yield_to_next(h);
-      routine_ret(h, r);
+    r.spawnr([i](handler_t &yield, RScheduler &r_) {
+      r_.stop_schedule();
+      ASSERT_EQ(i + 1, r_.cur_id());
+      R2_YIELD;
+      R2_RET;
     });
   }
   r.run();
