@@ -32,12 +32,12 @@ TEST(Channel, Correctness) {
 
   for (uint32_t i = 0; i < (max_entry_num << 1); i++) {
     uint64_t value = 0;
-    bool res = ch.dequeue(value);
+    auto res = ch.dequeue();
     if (i < max_entry_num) {
-      ASSERT_TRUE(res);
-      ASSERT_EQ(value, i);
+      ASSERT_TRUE(res.has_value());
+      ASSERT_EQ(*res, i);
     } else
-      ASSERT_FALSE(res);
+      ASSERT_FALSE(res.has_value());
   }
 
   ASSERT_TRUE(ch.isEmpty());
@@ -75,7 +75,7 @@ TEST(Channel, NonBlocking) {
   volatile uint32_t counter = 0;
   ChannelThread writer([=, &ch, &counter]() -> double {
     uint64_t val_count = 0;
-    
+
     for (uint32_t i = 0; i < (max_entry_num << 2); i++) {
       if (ch.enqueue(val_count++)) {
         __sync_fetch_and_add(&counter, 1);
@@ -86,9 +86,9 @@ TEST(Channel, NonBlocking) {
     uint64_t val_count = 0;
 
     for (uint32_t i = 0; i < (max_entry_num << 2); i++) {
-      uint64_t val = 0;
-      if (ch.dequeue(val)) {
-        EXPECT_EQ(val_count++, val);
+      auto res = ch.dequeue();
+      if (res.has_value()) {
+        EXPECT_EQ(val_count++, *res);
         __sync_fetch_and_sub(&counter, 1);
       }
     }
