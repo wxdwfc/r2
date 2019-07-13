@@ -20,9 +20,9 @@ TEST(Scheduler, id)
   RScheduler r;
   for (uint i = 0; i < 12; ++i)
   {
-    r.spawnr([i](handler_t &yield, RScheduler &r_) {
-      r_.stop_schedule();
-      ASSERT_EQ(i + 1, r_.cur_id());
+    r.spawnr([i](R2_ASYNC) {
+      R2_STOP();
+      ASSERT_EQ(i + 1, R2_COR_ID());
       R2_YIELD;
       R2_RET;
     });

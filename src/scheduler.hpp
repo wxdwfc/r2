@@ -11,12 +11,6 @@
 namespace r2
 {
 
-#define R2_ASYNC RScheduler &_r, handler_t &yield
-
-#define R2_YIELD r_.yield_to_next(yield);
-
-#define R2_RET routine_ret(yield, r_);
-
 class RScheduler : public RExecutor<rdmaio::IOStatus>
 {
 public:
@@ -96,5 +90,7 @@ private:
 
   DISABLE_COPY_AND_ASSIGN(RScheduler);
 }; // end class
+
+#include "scheduler_marocs.hpp"
 
 } // namespace r2
