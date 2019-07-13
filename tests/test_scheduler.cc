@@ -14,6 +14,13 @@ namespace test
 const int TCP_PORT = 3333;
 const int GLOBAL_MR_ID = 73;
 
+void test_cor(int id, R2_ASYNC)
+{
+  R2_YIELD;
+  ASSERT(id == 0);
+  R2_RET;
+}
+
 TEST(Scheduler, id)
 {
   // test whether RScheduler's ID is correct
@@ -22,7 +29,11 @@ TEST(Scheduler, id)
   {
     r.spawnr([i](R2_ASYNC) {
       R2_STOP();
+
       ASSERT_EQ(i + 1, R2_COR_ID());
+
+      test_cor(12, R2_PLACEHOLDER);
+
       R2_YIELD;
       R2_RET;
     });
