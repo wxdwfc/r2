@@ -5,7 +5,7 @@ namespace r2 {
 
 template <class T>
 class Channel {
-  static const uint64_t ENTRY_SIZE = CACHE_LINE_SZ;
+  static const uint64_t ENTRY_SIZE = 64; // CACHE_LINE_SZ
 
  private:
   struct Entry {
@@ -13,8 +13,8 @@ class Channel {
   } __attribute__((aligned(ENTRY_SIZE)));
 
  public:
-  volatile uint64_t __attribute__((aligned(CACHE_LINE_SZ))) head;
-  volatile uint64_t __attribute__((aligned(CACHE_LINE_SZ))) tail;
+  volatile uint64_t __attribute__((aligned(ENTRY_SIZE))) head;
+  volatile uint64_t __attribute__((aligned(ENTRY_SIZE))) tail;
   Entry *ring_buf;
   uint64_t max_entry_num;
 
@@ -24,7 +24,7 @@ class Channel {
     assert(!(max_entry_num & (max_entry_num - 1)));
 
     ring_buf = static_cast<Entry *>(
-        std::aligned_alloc(CACHE_LINE_SZ, max_entry_num * sizeof(Entry)));
+        std::aligned_alloc(ENTRY_SIZE, max_entry_num * sizeof(Entry)));
     assert(ring_buf != nullptr);
     assert((uint64_t)ring_buf % ENTRY_SIZE == 0);
   }
@@ -81,7 +81,7 @@ class Channel {
       return true;
     }
   }
-} __attribute__((aligned(CACHE_LINE_SZ)));
+} __attribute__((aligned(ENTRY_SIZE)));
 
 
 } // end namespace r2
