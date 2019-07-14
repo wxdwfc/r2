@@ -4,6 +4,7 @@
 
 #include "net_naming.hpp"
 #include "msg.hpp"
+#include "scheduler.hpp"
 
 #include "rlib/common.hpp"
 
@@ -30,8 +31,10 @@ public:
             R2_YIELD;
      */
     virtual Future
-    send(Msg *msg,
-         const double timeout = no_timeout) = 0;
+    send(Msg *msg, const double timeout = no_timeout) = 0;
+
+    virtual RScheduler::poll_func_t
+    send(Msg *msg, const double timeout = no_timeout) = 0;
 
     /*!
         A blocking version of send.
@@ -46,6 +49,10 @@ public:
     virtual rdmaio::IOStatus
     send_blocking(Msg *msg,
                   const double timeout = no_timeout) = 0;
+
+    /*!
+        XD:Should recording pending (un-sent message)
+     */
 };
 
 } // namespace r2

@@ -2,6 +2,8 @@
 
 #include "../common.hpp"
 
+#include <stdlib.h>
+
 namespace r2
 {
 
@@ -15,7 +17,7 @@ public:
     assert(!(max_entry_num & (max_entry_num - 1)));
 
     ring_buf = static_cast<Entry *>(
-        std::aligned_alloc(kCacheLineSize, max_entry_num * sizeof(Entry)));
+        ::aligned_alloc(kCacheLineSize, max_entry_num * sizeof(Entry)));
     assert(ring_buf != nullptr);
     assert((u64)ring_buf % ENTRY_SIZE == 0);
   }
