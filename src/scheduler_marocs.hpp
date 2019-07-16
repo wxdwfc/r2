@@ -19,6 +19,8 @@
  */
 namespace r2 {
 
+#define R2_EXECUTOR _r
+
 #define R2_ASYNC handler_t &yield, RScheduler &_r
 
 #define R2_PLACEHOLDER yield, _r

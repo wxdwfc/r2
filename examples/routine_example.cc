@@ -6,7 +6,7 @@ int main() {
 
   RExecutor<> r;
   for(uint i = 0;i < 12;++i) {
-    r.spawn<RExecutor<>>([i](handler_t &h,RExecutor<> &r) {
+    r.spawn<RExecutor<>>([i](handler_t &h,RExecutor<> &2) {
                            LOG(2) << "routine: " << r.cur_id() << " started";
                            r.yield_to_next(h);
                            LOG(4) << "routine: " << r.cur_id() << " yield back";
