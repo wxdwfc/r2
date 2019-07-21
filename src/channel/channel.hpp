@@ -7,6 +7,9 @@
 namespace r2
 {
 
+/*!
+  TODO: add an example here
+ */
 template <class T>
 class Channel
 {
