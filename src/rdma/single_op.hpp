@@ -65,17 +65,31 @@ public:
     // spawn a future
     if (flags & IBV_SEND_SIGNALED)
     {
-      auto poll_future = [this, &res, &wc](std::vector<int> &routine_count,
-                                           int &cor_id) {
+      auto id = R2_COR_ID();
+      auto poll_future = [this, id, &res, &wc](std::vector<int> &routine_count,
+                                               int &cor_id) {
+        if (routine_count[id] == 0)
+          // check whether this results is polled by another coroutine
+          // actually do we necessarily check this?
+          return rdmaio::SUCC;
         if ((cor_id = qp->poll_one_comp(wc)) == 0)
           return rdmaio::NOT_READY;
         if (likely(wc.status == IBV_WC_SUCCESS))
         {
           ASSERT(routine_count.size() > cor_id)
               << "get a wrong corid: " << cor_id;
-          ASSERT(routine_count[cor_id] == 1);
+
           //  we decrease the routine counter here
-          return rdmaio::SUCC;
+          ASSERT(routine_count[cor_id] > 0);
+          routine_count[cor_id] -= 1;
+
+          // check if we can add the coroutine back
+          if (cor_id == id)
+          {
+            if (likely(routine_count[id] == 0))
+              return rdmaio::SUCC;
+            return rdmaio::EJECT;
+          }
         }
         else
         {
@@ -89,6 +103,12 @@ public:
       // if the request is signaled, we emplace a poll future
       R2_EXECUTOR.emplace(R2_COR_ID(), 1, poll_future);
       R2_PAUSE_AND_YIELD;
+      // the results will be encoded in wc, so its fine
+      /*
+        Actually we can use YIELD, to avoid a future.
+        However, since calling between coroutines are much costly than calling a function,
+        so we remove the coroutine from this list 
+       */
     }
 
     return std::make_pair(res, wc);
