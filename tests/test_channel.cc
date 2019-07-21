@@ -89,8 +89,10 @@ TEST(Channel, NonBlocking)
 
     for (uint32_t i = 0; i < (max_entry_num << 2); i++)
     {
-      if (ch.enqueue(val_count++))
+      auto res = ch.enqueue(val_count);
+      if (res)
       {
+        val_count++;
         __sync_fetch_and_add(&counter, 1);
       }
     }
