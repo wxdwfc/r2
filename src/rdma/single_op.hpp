@@ -37,6 +37,18 @@ public:
     return *this;
   }
 
+  inline SROp &set_read()
+  {
+    this->op = IBV_WR_RDMA_READ;
+    return *this;
+  }
+
+  inline SROp &set_write()
+  {
+    this->op = IBV_WR_RDMA_WRITE;
+    return *this;
+  }
+
   inline SROp &set_remote_addr(const u64 &ra)
   {
     remote_addr = ra;
