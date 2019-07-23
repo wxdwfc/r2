@@ -1,36 +1,32 @@
 #pragma once
 
-#include "rexecutor.hpp"
 #include "futures/future.hpp"
+#include "rexecutor.hpp"
 
 #include "rlib/common.hpp"
 
-#include <vector>
 #include <deque>
+#include <vector>
 
-namespace r2
-{
+namespace r2 {
 
 class RScheduler : public RExecutor<rdmaio::IOStatus>
 {
 public:
-  typedef std::function<rdmaio::IOStatus(std::vector<int> &, int &)> poll_func_t;
+  using poll_result_t = std::pair<rdmaio::IOStatus, int>;
+  typedef std::function<poll_result_t(std::vector<int>&)> poll_func_t;
   typedef std::deque<poll_func_t> Futures;
-  typedef std::function<void(handler_t &yield, RScheduler &r)> routine_t;
+  typedef std::function<void(handler_t& yield, RScheduler& r)> routine_t;
 
   RScheduler();
 
-  explicit RScheduler(const routine_t &f);
+  explicit RScheduler(const routine_t& f);
 
-  int spawnr(const routine_t &f);
+  int spawnr(const routine_t& f);
 
-  void emplace(Future<rdmaio::IOStatus> &f)
+  void emplace(Future<rdmaio::IOStatus>& f)
   {
-    poll_futures_.push_back([&f](std::vector<int> &routine_count, int &cor_id) {
-      rdmaio::IOStatus res = f.poll(routine_count);
-      cor_id = f.cor_id;
-      return res;
-    });
+    ASSERT(false) << " legacy API, should not be used any more.";
   }
 
   void emplace(int corid, int num, poll_func_t f)
@@ -43,22 +39,20 @@ public:
     Pause with a timeout
     \param timeout: timeout in meconds
   */
-  inline rdmaio::IOStatus pause_to(handler_t &yield, double timeout)
+  inline rdmaio::IOStatus pause_to(handler_t& yield, double timeout)
   {
     Timer t;
-    while (true)
-    {
+    while (true) {
       yield_to_next(yield);
       if (pending_futures_[cur_id()] == 0)
         return rdmaio::SUCC;
-      if (t.passed_msec() > timeout)
-      {
+      if (t.passed_msec() > timeout) {
         return rdmaio::TIMEOUT;
       }
     }
   }
 
-  void pause(handler_t &yield)
+  void pause(handler_t& yield)
   {
     if (pending_futures_[cur_id()] > 0)
       pause_and_yield(yield);
@@ -74,16 +68,14 @@ public:
    */
   void poll_all();
 
-  bool is_running() const
-  {
-    return running_;
-  }
+  bool is_running() const { return running_; }
 
   std::vector<int> pending_futures_;
 
 private:
   // TODO, XD:
-  // Shall we leave the futures per coroutine, instead poll all futures per schedule?
+  // Shall we leave the futures per coroutine, instead poll all futures per
+  // schedule?
   Futures poll_futures_;
 
   bool running_ = true;

@@ -40,31 +40,40 @@ public:
 
   static void spawn_future(RScheduler& s, rdmaio::RCQP* qp, int num = 1)
   {
+    using namespace rdmaio;
+    auto id = s.cur_id();
     if (likely(num > 0))
       s.emplace(
-        s.cur_id(), num, [qp](std::vector<int>& routine_count, int& cor_id) {
-          ibv_wc wc;
-
-          if ((cor_id = qp->poll_one_comp(wc)) == 0) {
-            return rdmaio::NOT_READY;
-          } else {
-            // cor_id > 0
-            if (likely(wc.status == IBV_WC_SUCCESS)) {
-              ASSERT(routine_count.size() > cor_id)
-                << "get a wrong corid: " << cor_id;
-              ASSERT(routine_count[cor_id] > 0);
-              //  we decrease the routine counter here
-              routine_count[cor_id] -= 1;
-              if (routine_count[cor_id] == 0)
-                return rdmaio::SUCC;
-              return rdmaio::NOT_READY;
-            } else {
-              RDMA_LOG(4) << "poll till completion error: " << wc.status << " "
-                          << ibv_wc_status_str(wc.status);
-              // TODO: fix error cases
-              return rdmaio::ERR;
-            }
+        s.cur_id(),
+        num,
+        [id, qp](std::vector<int>& routine_count) -> RScheduler::poll_result_t {
+          int cor_id;
+          if (routine_count[id] == 0) {
+            return std::make_pair(SUCC, id);
           }
+
+          ibv_wc wc;
+          if ((cor_id = qp->poll_one_comp(wc)) &&
+              (wc.status == IBV_WC_SUCCESS)) {
+            ASSERT(routine_count.size() > cor_id);
+            ASSERT(routine_count[cor_id] >= 1)
+              << "polled an invalid cor_id: " << cor_id;
+            //  we decrease the routine counter here
+            routine_count[cor_id] -= 1;
+          }
+          if (unlikely(cor_id != 0 && (wc.status != IBV_WC_SUCCESS))) {
+            LOG(4) << "poll till completion error: " << wc.status << " "
+                   << ibv_wc_status_str(wc.status);
+            // TODO： we need to filter out timeout events
+            return std::make_pair(NOT_READY,
+                                  cor_id); // this SUCC only indicates the
+                                           // scheduler to eject this coroutine
+          }
+          if (routine_count[id] == 0) {
+            return std::make_pair(SUCC, id);
+          }
+
+          return std::make_pair(NOT_READY, 0);
         });
   }
 
