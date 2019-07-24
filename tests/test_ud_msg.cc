@@ -15,9 +15,10 @@ const int mr_id    = 73;
 
 char *test_buffer = new char[buf_size2];
 
-RdmaCtrl ctrl(tcp_port2);
-
 TEST(UdMsgTest, simple) {
+
+  RdmaCtrl ctrl(tcp_port2);
+
 #if 0
   // write something to the test buffer
   Marshal::serialize_to_buf<uint64_t>(0,test_buffer);
