@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "rlib/rdma_ctrl.hpp"
 #include "../src/msg/ud_msg.hpp"
+#include "rlib/rdma_ctrl.hpp"
 //#include "rlib/ralloc/ralloc.h"
 
 namespace test {
@@ -9,9 +9,8 @@ namespace test {
 using namespace r2;
 using namespace rdmaio;
 
-const int tcp_port2 = 8888;
 const int buf_size2 = 64 * 1024 * 1024;
-const int mr_id    = 73;
+const int mr_id = 73;
 
 char *test_buffer = new char[buf_size2];
 
@@ -19,6 +18,7 @@ RdmaCtrl ctrl(tcp_port2);
 
 TEST(UdMsgTest, simple) {
 #if 0
+const int tcp_port2 = 8888;
   // write something to the test buffer
   Marshal::serialize_to_buf<uint64_t>(0,test_buffer);
 
@@ -77,7 +77,8 @@ TEST(UdMsgTest, simple) {
 } // end test function
 
 TEST(UdMsgTest, iter) {
-  #if 0
+#if 0
+  const int tcp_port2 = 8888;
   // TODO: implemented
 
   //char *test_buffer = new char[buf_size2];
