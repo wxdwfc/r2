@@ -9,16 +9,15 @@ namespace test {
 using namespace r2;
 using namespace rdmaio;
 
+const int tcp_port2 = 8888;
 const int buf_size2 = 64 * 1024 * 1024;
 const int mr_id = 73;
 
 char *test_buffer = new char[buf_size2];
 
-RdmaCtrl ctrl(tcp_port2);
-
 TEST(UdMsgTest, simple) {
 #if 0
-const int tcp_port2 = 8888;
+RdmaCtrl ctrl(tcp_port2);
   // write something to the test buffer
   Marshal::serialize_to_buf<uint64_t>(0,test_buffer);
 
@@ -78,7 +77,7 @@ const int tcp_port2 = 8888;
 
 TEST(UdMsgTest, iter) {
 #if 0
-  const int tcp_port2 = 8888;
+  RdmaCtrl ctrl(tcp_port2);
   // TODO: implemented
 
   //char *test_buffer = new char[buf_size2];
