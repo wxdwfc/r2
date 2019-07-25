@@ -16,7 +16,7 @@ namespace r2
 class Session
 {
 public:
-    constexpr double no_timeout = std::numeric_limits<double>::max();
+    static constexpr double no_timeout = std::numeric_limits<double>::max();
     /*!
         Send a message, and spawn a future in the scheduler
 
