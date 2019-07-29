@@ -13,12 +13,10 @@ namespace r2
 /*!
     Session manages a connection from myself to a specific remote point.
 */
-#define R2Future class
-template <R2Future Future>
 class Session
 {
 public:
-    constexpr double no_timeout = std::numeric_limits<double>::max();
+    static constexpr double no_timeout = std::numeric_limits<double>::max();
     /*!
         Send a message, and spawn a future in the scheduler
 
@@ -30,11 +28,8 @@ public:
             R2_SPAWN(future);
             R2_YIELD;
      */
-    virtual Future
-    send(Msg *msg, const double timeout = no_timeout) = 0;
-
     virtual RScheduler::poll_func_t
-    send(Msg *msg, const double timeout = no_timeout) = 0;
+    send(const Msg &msg, const double timeout = no_timeout) = 0;
 
     /*!
         A blocking version of send.
@@ -47,12 +42,15 @@ public:
             ASSERT(ret == SUCC);
      */
     virtual rdmaio::IOStatus
-    send_blocking(Msg *msg,
+    send_blocking(const Msg &msg,
                   const double timeout = no_timeout) = 0;
 
     /*!
         XD:Should recording pending (un-sent message)
      */
+    virtual rdmaio::IOStatus
+    send_pending(const Msg &msg,
+                 const double timeout = no_timeout) = 0;
 };
 
 } // namespace r2
