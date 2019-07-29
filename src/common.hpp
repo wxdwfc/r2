@@ -2,12 +2,11 @@
 
 #include <cinttypes>
 
-#include "macros.hpp"
 #include "logging.hpp"
+#include "macros.hpp"
 #include "option.hpp"
 
-namespace r2
-{
+namespace r2 {
 
 typedef uint64_t u64;
 typedef uint32_t u32;
