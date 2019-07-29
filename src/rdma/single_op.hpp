@@ -13,68 +13,77 @@ using namespace rdmaio;
  one-sided RDMA.
       ::r2::rdma::SROp op(qp);
       op.set_payload(ptr,3).set_remote_addr(0xc).set_op(IBV_WR_RDMA_READ);
-      auto ret = op.execute(IBV_SEND_SIGNALED,R2_ASYNC_WAIT);
+      auto ret = op.execute(IBV_SEND_SIGNALED,R2_ASYNC_WAIT); // async version
       ASSERT(std::get<0>(ret) == SUCC);
- */
-class SROp
-{
-public:
-  explicit SROp(RCQP* qp)
-    : qp(qp)
-  {}
 
-  inline SROp& set_payload(char* ptr, int size)
-  {
+      or
+      auto ret = op.execute(); // sync version
+ */
+class SROp {
+public:
+  explicit SROp(RCQP *qp) : qp(qp) {}
+
+  inline SROp &set_payload(char *ptr, int size) {
     local_ptr = ptr;
     this->size = size;
     return *this;
   }
 
-  inline SROp& set_op(const ibv_wr_opcode& op)
-  {
+  inline SROp &set_op(const ibv_wr_opcode &op) {
     this->op = op;
     return *this;
   }
 
-  inline SROp& set_read()
-  {
+  inline SROp &set_read() {
     this->op = IBV_WR_RDMA_READ;
     return *this;
   }
 
-  inline SROp& set_write()
-  {
+  inline SROp &set_write() {
     this->op = IBV_WR_RDMA_WRITE;
     return *this;
   }
 
-  inline SROp& set_remote_addr(const u64& ra)
-  {
+  inline SROp &set_remote_addr(const u64 &ra) {
     remote_addr = ra;
     return *this;
   }
 
   using Result_t = std::tuple<IOStatus, struct ibv_wc>;
 
-  inline Result_t execute(R2_ASYNC)
-  {
+  inline Result_t execute(R2_ASYNC) {
     return execute(IBV_SEND_SIGNALED, R2_ASYNC_WAIT);
   }
 
-  inline Result_t execute(int flags, R2_ASYNC)
-  {
+  /*!
+   TODO: add timeout
+   */
+  inline Result_t execute_blocking() {
     ibv_wc wc;
     auto res = qp->send(
-      { .op = op, .flags = flags, .len = size, .wr_id = R2_COR_ID() },
-      { .local_buf = local_ptr, .remote_addr = remote_addr, .imm_data = 0 });
+        {.op = op,
+         .flags = flags | IBV_SEND_SIGNALED,
+         .len = size,
+         .wr_id = 0 /*a dummy record*/},
+        {.local_buf = local_ptr, .remote_addr = remote_addr, .imm_data = 0});
+    if (res == SUCC)
+      res = qp->wait_completion(wc);
+    return std::make_pair(res, wc);
+  }
+
+  inline Result_t execute(int flags, R2_ASYNC) {
+    ibv_wc wc;
+    auto res = qp->send(
+        {.op = op, .flags = flags, .len = size, .wr_id = R2_COR_ID()},
+        {.local_buf = local_ptr, .remote_addr = remote_addr, .imm_data = 0});
     if (unlikely(res != SUCC))
       return std::make_pair(res, wc);
     // spawn a future
     if (flags & IBV_SEND_SIGNALED) {
       auto id = R2_COR_ID();
       auto poll_future =
-        [this, id, &res, &wc](
-          std::vector<int>& routine_count) -> RScheduler::poll_result_t {
+          [this, id, &res,
+           &wc](std::vector<int> &routine_count) -> RScheduler::poll_result_t {
         if (routine_count[id] == 0) {
           res = SUCC;
           return std::make_pair(SUCC, id);
@@ -84,7 +93,7 @@ public:
         if ((cor_id = qp->poll_one_comp(wc)) && (wc.status == IBV_WC_SUCCESS)) {
           ASSERT(routine_count.size() > cor_id);
           ASSERT(routine_count[cor_id] >= 1)
-            << "polled an invalid cor_id: " << cor_id;
+              << "polled an invalid cor_id: " << cor_id;
           //  we decrease the routine counter here
           routine_count[cor_id] -= 1;
         } else {
@@ -118,12 +127,12 @@ public:
   }
 
 private:
-  RCQP* qp = nullptr;
+  RCQP *qp = nullptr;
   ibv_wr_opcode op;
 
   u64 remote_addr;
 
-  char* local_ptr = nullptr;
+  char *local_ptr = nullptr;
   int size = 0;
 };
 } // namespace rdma
