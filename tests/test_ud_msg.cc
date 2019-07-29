@@ -20,6 +20,7 @@ TEST(UdMsgTest, simple) {
   RdmaCtrl ctrl(tcp_port2);
 
 #if 0
+RdmaCtrl ctrl(tcp_port2);
   // write something to the test buffer
   Marshal::serialize_to_buf<uint64_t>(0, test_buffer);
 
@@ -85,6 +86,10 @@ TEST(UdMsgTest, simple) {
 
 TEST(UdMsgTest, iter) {
 #if 0
+<<<<<<< HEAD
+=======
+  RdmaCtrl ctrl(tcp_port2);
+>>>>>>> 9076c5805ff4066c7d8da8067069d1d50fe5a77a
   // TODO: implemented
 
   // char *test_buffer = new char[buf_size2];
