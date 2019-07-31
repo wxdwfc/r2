@@ -17,12 +17,12 @@ public:
   Channel(u64 max_entry_num = 1)
       : max_entry_num(max_entry_num), head(0), tail(0)
   {
-    assert(!(max_entry_num & (max_entry_num - 1)));
+    ASSERT(!(max_entry_num & (max_entry_num - 1)));
 
     ring_buf = static_cast<Entry *>(
         ::aligned_alloc(kCacheLineSize, max_entry_num * sizeof(Entry)));
-    assert(ring_buf != nullptr);
-    assert((u64)ring_buf % ENTRY_SIZE == 0);
+    ASSERT(ring_buf != nullptr);
+    ASSERT((u64)ring_buf % ENTRY_SIZE == 0);
   }
 
   ~Channel() { free(ring_buf); }
@@ -33,7 +33,7 @@ public:
 
   inline bool enqueue(const T &value)
   {
-    assert(head >= tail);
+    ASSERT(head >= tail);
     if (head == tail + max_entry_num)
     {
       return false;
@@ -50,7 +50,7 @@ public:
 
   inline void enqueue_blocking(const T &value)
   {
-    assert(head >= tail);
+    ASSERT(head >= tail);
     while (head == tail + max_entry_num)
       ;
     u64 index = head & (max_entry_num - 1);
@@ -61,7 +61,7 @@ public:
 
   inline T dequeue_blocking()
   {
-    assert(head >= tail);
+    ASSERT(head >= tail);
     while (head == tail)
       ;
     u64 index = tail & (max_entry_num - 1);
@@ -73,7 +73,7 @@ public:
 
   inline Option<T> dequeue()
   {
-    assert(head >= tail);
+    ASSERT(head >= tail);
     if (head == tail)
     {
       return {};
