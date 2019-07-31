@@ -2,8 +2,8 @@
 
 #include <cinttypes>
 
-#include "logging.hpp"
 #include "macros.hpp"
+#include "logging.hpp"
 #include "option.hpp"
 
 namespace r2 {
