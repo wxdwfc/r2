@@ -21,7 +21,10 @@ using namespace rdmaio;
 class SyncCM
 {
 public:
+    const MacID remote_id;
+
     using Result_mr_t = std::tuple<IOStatus, RemoteMemory::Attr>;
+
     explicit SyncCM(const MacID &id) : remote_id(id) {}
 
     Result_mr_t get_mr(u64 mr_id, double timeout = Timer::no_timeout)
@@ -69,8 +72,6 @@ public:
 
         return res;
     }
-
-    const MacID remote_id;
 };
 } // namespace rdma
 } // namespace r2

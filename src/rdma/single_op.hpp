@@ -23,9 +23,17 @@ using namespace rdmaio;
  */
 class SROp
 {
-public:
+private:
+  RCQP *qp = nullptr;
+  ibv_wr_opcode op;
+
+  u64 remote_addr;
+
+  char *local_ptr = nullptr;
+  int size = 0;
   explicit SROp(RCQP *qp) : qp(qp) {}
 
+public:
   inline SROp &set_payload(char *ptr, int size)
   {
     local_ptr = ptr;
@@ -143,15 +151,6 @@ public:
 
     return std::make_pair(res, wc);
   }
-
-private:
-  RCQP *qp = nullptr;
-  ibv_wr_opcode op;
-
-  u64 remote_addr;
-
-  char *local_ptr = nullptr;
-  int size = 0;
 };
 } // namespace rdma
 
