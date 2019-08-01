@@ -9,20 +9,14 @@ namespace r2 {
 
 const int max_idle_num = 1;
 
-UdAdapter::UdAdapter(const Addr& my_addr, UDQP* sqp, UDQP* qp)
-  : my_addr(my_addr)
-  , send_qp_(sqp)
-  , qp_(qp ? qp : sqp)
-  , sender_(my_addr, qp_->local_mem_.key)
-  , receiver_(qp_)
-{}
+UdAdapter::UdAdapter(const Addr &my_addr, UDQP *sqp, UDQP *qp)
+    : my_addr(my_addr), send_qp_(sqp), qp_(qp ? qp : sqp),
+      sender_(my_addr, qp_->local_mem_.key), receiver_(qp_) {}
 
-static ibv_ah*
-create_ah(UDQP* qp, const QPAttr& attr);
+static ibv_ah *create_ah(UDQP *qp, const QPAttr &attr);
 
-IOStatus
-UdAdapter::connect(const Addr& addr, const rdmaio::MacID& id, int uid)
-{
+IOStatus UdAdapter::connect(const Addr &addr, const rdmaio::MacID &id,
+                            int uid) {
 
   // check if we already connected
   if (connect_infos_.find(addr.to_u32()) != connect_infos_.end())
@@ -34,27 +28,25 @@ UdAdapter::connect(const Addr& addr, const rdmaio::MacID& id, int uid)
     auto ah = create_ah(qp_, fetched_attr);
     if (ah == nullptr)
       return ERR;
-    UdConnectInfo connect_info = { .address_handler = ah,
-                                   .remote_qpn = fetched_attr.qpn,
-                                   .remote_qkey = fetched_attr.qkey };
+    UdConnectInfo connect_info = {.address_handler = ah,
+                                  .remote_qpn = fetched_attr.qpn,
+                                  .remote_qkey = fetched_attr.qkey};
     connect_infos_.insert(std::make_pair(addr.to_u32(), connect_info));
     return SUCC;
   } else
     return ret;
 }
 
-IOStatus
-UdAdapter::send_async(const Addr& addr, const char* msg, int size)
-{
+IOStatus UdAdapter::send_async(const Addr &addr, const char *msg, int size) {
 
-  auto& wr = sender_.cur_wr();
-  auto& sge = sender_.cur_sge();
+  auto &wr = sender_.cur_wr();
+  auto &sge = sender_.cur_sge();
 
-  const auto& it = connect_infos_.find(addr.to_u32());
+  const auto &it = connect_infos_.find(addr.to_u32());
   if (unlikely(it == connect_infos_.end()))
     return NOT_CONNECT;
 
-  const auto& link_info = it->second;
+  const auto &link_info = it->second;
 
   wr.wr.ud.ah = link_info.address_handler;
   wr.wr.ud.remote_qpn = link_info.remote_qpn;
@@ -86,19 +78,25 @@ UdAdapter::send_async(const Addr& addr, const char* msg, int size)
   return SUCC;
 }
 
-IOStatus
-UdAdapter::flush_pending()
-{
-  return sender_.flush_pending(send_qp_);
-}
+IOStatus UdAdapter::flush_pending() { return sender_.flush_pending(send_qp_); }
 
-int
-UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
-{
+int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
 #if R2_SOLICITED
-  struct ibv_cq* ev_cq;
   if (qp_->event_channel) {
-    void* ev_ctx;
+#if 0
+    struct pollfd my_pollfd;
+    my_pollfd.fd = qp_->event_channel->fd;
+    my_pollfd.events = POLLIN;
+    my_pollfd.revents = 0;
+    auto rc = poll(&my_pollfd, 1, 0);
+    ASSERT(rc >= 0);
+
+    if (rc == 0)
+      return 0;
+#endif
+    // There is events, get it
+    void *ev_ctx;
+    struct ibv_cq *ev_cq;
 
     // waiting for in-coming requests
     // XD: fixme: this is a blocking call
@@ -112,13 +110,12 @@ UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
   }
 #endif
   uint poll_result =
-    ibv_poll_cq(qp_->recv_cq_, MAX_UD_RECV_SIZE, receiver_.wcs_);
+      ibv_poll_cq(qp_->recv_cq_, MAX_UD_RECV_SIZE, receiver_.wcs_);
   for (uint i = 0; i < poll_result; ++i) {
     if (likely(receiver_.wcs_[i].status == IBV_WC_SUCCESS)) {
       Addr addr;
       addr.from_u32(receiver_.wcs_[i].imm_data);
-      f((const char*)(receiver_.wcs_[i].wr_id + GRH_SIZE),
-        MAX_UD_PACKET_SIZE,
+      f((const char *)(receiver_.wcs_[i].wr_id + GRH_SIZE), MAX_UD_PACKET_SIZE,
         addr);
     } else {
       ASSERT(false) << "error wc status " << receiver_.wcs_[i].status;
@@ -138,16 +135,13 @@ UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
   return poll_result;
 }
 
-Buf_t
-UdAdapter::get_my_conninfo()
-{
+Buf_t UdAdapter::get_my_conninfo() {
   QPAttr res = qp_->get_attr();
   return Marshal::serialize_to_buf(res);
 }
 
-IOStatus
-UdAdapter::connect_from_incoming(const Addr& addr, const Buf_t& connect_info)
-{
+IOStatus UdAdapter::connect_from_incoming(const Addr &addr,
+                                          const Buf_t &connect_info) {
   QPAttr attr;
   if (!Marshal::deserialize(connect_info, attr))
     return ERR;
@@ -155,18 +149,15 @@ UdAdapter::connect_from_incoming(const Addr& addr, const Buf_t& connect_info)
   if (ah == nullptr)
     return ERR;
 
-  UdConnectInfo info = { .address_handler = ah,
-                         .remote_qpn = attr.qpn,
-                         .remote_qkey = attr.qkey };
+  UdConnectInfo info = {
+      .address_handler = ah, .remote_qpn = attr.qpn, .remote_qkey = attr.qkey};
   if (connect_infos_.find(addr.to_u32()) != connect_infos_.end())
     connect_infos_.erase(connect_infos_.find(addr.to_u32()));
   connect_infos_.insert(std::make_pair(addr.to_u32(), info));
   return SUCC;
 }
 
-void
-UdAdapter::disconnect(const Addr& addr)
-{
+void UdAdapter::disconnect(const Addr &addr) {
 #if 1
   if (connect_infos_.find(addr.to_u32()) != connect_infos_.end()) {
     auto ah = connect_infos_[addr.to_u32()].address_handler;
@@ -176,15 +167,9 @@ UdAdapter::disconnect(const Addr& addr)
 #endif
 }
 
-Iter_p_t
-UdAdapter::get_iter()
-{
-  return Iter_p_t(new UDIncomingIter(this));
-}
+Iter_p_t UdAdapter::get_iter() { return Iter_p_t(new UDIncomingIter(this)); }
 
-static ibv_ah*
-create_ah(UDQP* qp, const QPAttr& attr)
-{
+static ibv_ah *create_ah(UDQP *qp, const QPAttr &attr) {
   struct ibv_ah_attr ah_attr;
   ah_attr.is_global = 1;
   ah_attr.dlid = attr.lid;
