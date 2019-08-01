@@ -9,23 +9,19 @@ namespace test {
 using namespace r2;
 using namespace rdmaio;
 
-const int tcp_port2 = 8888;
-const int buf_size2 = 64 * 1024 * 1024;
-const int mr_id = 73;
+TEST(Msg, UD) {
 
-char *test_buffer = new char[buf_size2];
+  const int tcp_port2 = 8888;
+  const int buf_size2 = 64 * 1024 * 1024;
+  const int mr_id = 73;
 
-TEST(UdMsgTest, simple) {
+  char *test_buffer = new char[buf_size2];
 
   RdmaCtrl ctrl(tcp_port2);
-
-#if 0
-RdmaCtrl ctrl(tcp_port2);
   // write something to the test buffer
   Marshal::serialize_to_buf<uint64_t>(0, test_buffer);
 
-  // RInit(test_buffer, buf_size2);
-  // RThreadLocalInit();
+  AllocatorMaster<0>::init(test_buffer, buf_size2);
 
   auto all_devices = RNicInfo::query_dev_names();
   ASSERT_FALSE(all_devices.empty());
@@ -57,7 +53,8 @@ RdmaCtrl ctrl(tcp_port2);
         SUCC);
 
     int total_msg_count = 512;
-    char *send_buf = (char *)Rmalloc(64);
+    char *send_buf =
+        (char *)(AllocatorMaster<0>::get_thread_allocator()->alloc(4096));
     for (uint i = 0; i < total_msg_count; ++i) {
       sprintf(send_buf, "sender message: %d", i);
       ASSERT_EQ(adapter.send({.mac_id = 0, .thread_id = 73}, send_buf,
@@ -81,74 +78,6 @@ RdmaCtrl ctrl(tcp_port2);
     // pass the connect phase
     ctrl.mr_factory.deregister_mr(mr_id + 1);
   }
-#endif
 } // end test function
-
-TEST(UdMsgTest, iter) {
-#if 0
-<<<<<<< HEAD
-=======
-  RdmaCtrl ctrl(tcp_port2);
->>>>>>> 9076c5805ff4066c7d8da8067069d1d50fe5a77a
-  // TODO: implemented
-
-  // char *test_buffer = new char[buf_size2];
-  // write something to the test buffer
-  // Marshal::serialize_to_buf<uint64_t>(0,test_buffer);
-
-  // RInit(test_buffer, buf_size2);
-  // RThreadLocalInit();
-
-  auto all_devices = RNicInfo::query_dev_names();
-  ASSERT_FALSE(all_devices.empty());
-
-  RNic nic(all_devices[0]);
-  ASSERT_TRUE(nic.ready());
-  {
-    // first we create the UDPQ like the previous test_ud connect test.
-    ASSERT_EQ(ctrl.mr_factory.register_mr(mr_id, test_buffer, buf_size2, nic),
-              SUCC);
-
-    RemoteMemory::Attr local_mr_attr;
-    auto ret = RMemoryFactory::fetch_remote_mr(
-        mr_id, std::make_tuple("localhost", tcp_port2), local_mr_attr);
-    ASSERT_EQ(ret, SUCC);
-
-    auto qp = new UDQP(nic, local_mr_attr,
-                       QPConfig().set_max_send(64).set_max_recv(2048));
-    ASSERT_TRUE(qp->valid());
-    // create the UDMsg
-    int ud_id = 73;
-
-    UdAdapter adapter({.mac_id = 0, .thread_id = 73}, qp);
-    ASSERT_TRUE(ctrl.qp_factory.register_ud_qp(ud_id, qp));
-    ASSERT_EQ(
-        adapter.connect({.mac_id = 0, .thread_id = 73}, // connect to myself
-                        ::rdmaio::make_id("localhost", tcp_port2), ud_id),
-        SUCC);
-
-    int total_msg_count = 512;
-    char *send_buf = (char *)Rmalloc(64);
-    for (uint i = 0; i < total_msg_count; ++i) {
-      sprintf(send_buf, "sender message: %d", i);
-      ASSERT_EQ(adapter.send({.mac_id = 0, .thread_id = 73}, send_buf,
-                             strlen(send_buf) + 1),
-                SUCC);
-    }
-
-    sleep(1);
-
-    int received_count = 0;
-    for (auto it = adapter.get_iter(); it->has_next();) {
-      auto msg_meta = it->next();
-      received_count += 1;
-      ASSERT_EQ(msg_meta.from.thread_id, 73);
-    }
-    ASSERT_EQ(received_count, total_msg_count);
-    // pass the connect phase
-  }
-  ctrl.mr_factory.deregister_mr(mr_id);
-#endif
-}
 
 } // end namespace test

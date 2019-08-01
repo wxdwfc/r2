@@ -2,8 +2,10 @@
 
 #include "protocol.hpp"
 
-#include <unordered_map>
 #include "rlib/ud.hpp"
+#include <unordered_map>
+
+#define R2_SOLICITED 1
 
 #include "ud_data.hpp"
 
@@ -12,16 +14,19 @@ namespace r2 {
 class UDIncomingIter;
 class UdAdapter : public MsgProtocol {
   friend class UDIncomingIter;
- public:
-  UdAdapter(const Addr &my_addr,rdmaio::UDQP *sqp,rdmaio::UDQP *qp = nullptr);
 
-  rdmaio::IOStatus connect(const Addr &addr,const rdmaio::MacID &id,int i) override;
+public:
+  UdAdapter(const Addr &my_addr, rdmaio::UDQP *sqp, rdmaio::UDQP *qp = nullptr);
 
-  rdmaio::IOStatus send_async(const Addr &addr,const char *msg,int size) override;
+  rdmaio::IOStatus connect(const Addr &addr, const rdmaio::MacID &id,
+                           int i) override;
+
+  rdmaio::IOStatus send_async(const Addr &addr, const char *msg,
+                              int size) override;
 
   rdmaio::IOStatus flush_pending() override;
 
-  int     poll_all(const MsgProtocol::msg_callback_t &f) override;
+  int poll_all(const MsgProtocol::msg_callback_t &f) override;
 
   Iter_p_t get_iter() override;
 
@@ -30,21 +35,23 @@ class UdAdapter : public MsgProtocol {
   */
   rdmaio::Buf_t get_my_conninfo() override;
 
-  rdmaio::IOStatus connect_from_incoming(const Addr &addr,const rdmaio::Buf_t &connect_info);
+  rdmaio::IOStatus connect_from_incoming(const Addr &addr,
+                                         const rdmaio::Buf_t &connect_info);
 
   void disconnect(const Addr &addr);
 
- public:
-  const  Addr     my_addr;
- private:
+public:
+  const Addr my_addr;
+
+private:
   // QP to receive requests
-  rdmaio::UDQP *qp_      = nullptr;
+  rdmaio::UDQP *qp_ = nullptr;
   rdmaio::UDQP *send_qp_ = nullptr;
 
-  std::unordered_map<Addr_id_t,UdConnectInfo> connect_infos_;
+  std::unordered_map<Addr_id_t, UdConnectInfo> connect_infos_;
 
-  UdSender                                    sender_;
-  UdReceiver                                  receiver_;
+  UdSender sender_;
+  UdReceiver receiver_;
 
   int current_idle_recvs_ = 0;
 
