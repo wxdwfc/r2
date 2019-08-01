@@ -47,10 +47,17 @@ public:
 
     /*!
         XD:Should recording pending (un-sent message)
+        Post a request to the RNIC, and ignore its completion. 
+     */
+    virtual rdmaio::IOStatus
+    send_pending(const Msg &msg) = 0;
+
+    /*!
+        Async, coroutine version
      */
     virtual rdmaio::IOStatus
     send_pending(const Msg &msg,
-                 const double timeout = no_timeout) = 0;
+                 R2_ASYNC) = 0;
 };
 
 } // namespace r2

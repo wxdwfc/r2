@@ -8,23 +8,32 @@
 #include <deque>
 #include <vector>
 
-namespace r2 {
+namespace r2
+{
 
 class RScheduler : public RExecutor<rdmaio::IOStatus>
 {
 public:
   using poll_result_t = std::pair<rdmaio::IOStatus, int>;
-  typedef std::function<poll_result_t(std::vector<int>&)> poll_func_t;
-  typedef std::deque<poll_func_t> Futures;
-  typedef std::function<void(handler_t& yield, RScheduler& r)> routine_t;
+  using poll_func_t = std::function<poll_result_t(std::vector<int> &)>;
+  using Futures = std::deque<poll_func_t>;
+  using routine_t = std::function<void(handler_t &yield, RScheduler &r)>;
+  // TODO, XD:
+  // Shall we leave the futures per coroutine, instead poll all futures per
+  // schedule?
+private:
+  Futures poll_futures_;
 
+  bool running_ = true;
+
+public:
   RScheduler();
 
-  explicit RScheduler(const routine_t& f);
+  explicit RScheduler(const routine_t &f);
 
-  int spawnr(const routine_t& f);
+  int spawnr(const routine_t &f);
 
-  void emplace(Future<rdmaio::IOStatus>& f)
+  void emplace(Future<rdmaio::IOStatus> &f)
   {
     ASSERT(false) << " legacy API, should not be used any more.";
   }
@@ -39,20 +48,22 @@ public:
     Pause with a timeout
     \param timeout: timeout in meconds
   */
-  inline rdmaio::IOStatus pause_to(handler_t& yield, double timeout)
+  inline rdmaio::IOStatus pause_to(handler_t &yield, double timeout)
   {
     Timer t;
-    while (true) {
+    while (true)
+    {
       yield_to_next(yield);
       if (pending_futures_[cur_id()] == 0)
         return rdmaio::SUCC;
-      if (t.passed_msec() > timeout) {
+      if (t.passed_msec() > timeout)
+      {
         return rdmaio::TIMEOUT;
       }
     }
   }
 
-  void pause(handler_t& yield)
+  void pause(handler_t &yield)
   {
     if (pending_futures_[cur_id()] > 0)
       pause_and_yield(yield);
@@ -71,14 +82,6 @@ public:
   bool is_running() const { return running_; }
 
   std::vector<int> pending_futures_;
-
-private:
-  // TODO, XD:
-  // Shall we leave the futures per coroutine, instead poll all futures per
-  // schedule?
-  Futures poll_futures_;
-
-  bool running_ = true;
 
   DISABLE_COPY_AND_ASSIGN(RScheduler);
 }; // end class

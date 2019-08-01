@@ -17,7 +17,8 @@
     - Coroutine ret.
         R2_RET;
  */
-namespace r2 {
+namespace r2
+{
 
 #define R2_EXECUTOR _r
 
@@ -39,4 +40,21 @@ namespace r2 {
 
 #define R2_STOP() _r.stop_schedule();
 
+#define R2_PAUSE_WAIT(poll_func, num)                     \
+    {                                                     \
+        R2_EXECUTOR.emplace(R2_COR_ID(), num, poll_func); \
+        R2_PAUSE_AND_YIELD;                               \
+    }
+
+#define R2_WAIT(poll_func, ret)                                         \
+    {                                                                   \
+        ret = ::rdmaio::NOT_READY;                                      \
+        do                                                              \
+        {                                                               \
+            ret = std::get<0>(poll_func(R2_EXECUTOR.pending_futures_)); \
+            if (ret == SUCC || ret == ERR)                              \
+                break;                                                  \
+            R2_YIELD;                                                   \
+        } while (true)                                                  \
+    }
 } // namespace r2
