@@ -80,6 +80,22 @@ IOStatus UdAdapter::send_async(const Addr &addr, const char *msg, int size) {
 IOStatus UdAdapter::flush_pending() { return sender_.flush_pending(send_qp_); }
 
 int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f) {
+#if R2_SOLICITED
+  struct ibv_cq *ev_cq;
+  void *ev_ctx;
+
+  // waiting for in-coming requests
+  // XD: fixme: this is a blocking call
+  if (ibv_get_cq_event(qp_->event_channel, &ev_cq, &ev_ctx)) {
+    ASSERT(false) << "faild to get the cq event";
+  }
+
+  ibv_ack_cq_events(ev_cq, 1);
+
+  if (ibv_req_notify_cq(ev_cq, 1)) {
+    ASSERT(false) << "Couldn't request CQ notification";
+  }
+#endif
   uint poll_result =
       ibv_poll_cq(qp_->recv_cq_, MAX_UD_RECV_SIZE, receiver_.wcs_);
   for (uint i = 0; i < poll_result; ++i) {

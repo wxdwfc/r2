@@ -39,7 +39,11 @@ TEST(Msg, UD) {
         mr_id + 1, std::make_tuple("localhost", tcp_port2), local_mr_attr);
     ASSERT_EQ(ret, SUCC);
 
-    auto qp = new UDQP(nic, local_mr_attr,
+    bool with_channel = false;
+#if R2_SOLICITED
+    with_channel = true;
+#endif
+    auto qp = new UDQP(nic, local_mr_attr, with_channel,
                        QPConfig().set_max_send(64).set_max_recv(2048));
     ASSERT_TRUE(qp->valid());
     // create the UDMsg
@@ -61,7 +65,7 @@ TEST(Msg, UD) {
                              strlen(send_buf) + 1),
                 SUCC);
     }
-
+    LOG(4) << "Send done";
     sleep(1);
 
     // now we check the message contents
