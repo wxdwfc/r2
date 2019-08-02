@@ -24,12 +24,16 @@ public:
         \param timeout: time out recorded in **ms**
 
         usage example:
-            auto future = session.send(msg,120);        
+            auto future = session.send(msg,120);
             R2_SPAWN(future);
             R2_YIELD;
      */
-    virtual RScheduler::poll_func_t
-    send(const Msg &msg, const double timeout = no_timeout) = 0;
+    /*!
+      res, Option<The detailed reason of err>
+     */
+    using msg_result_t = std::pair<rdmaio::IOStatus,std::string>;
+    virtual msg_result_t
+    send(const Msg &msg, const double timeout, R2_ASYNC) = 0;
 
     /*!
         A blocking version of send.
@@ -47,7 +51,7 @@ public:
 
     /*!
         XD:Should recording pending (un-sent message)
-        Post a request to the RNIC, and ignore its completion. 
+        Post a request to the RNIC, and ignore its completion.
      */
     virtual rdmaio::IOStatus
     send_pending(const Msg &msg) = 0;
