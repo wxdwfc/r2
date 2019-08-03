@@ -34,7 +34,7 @@ public:
         Timer t;
         do
         {
-            auto res = RMemoryFactory::fetch_remote_mr(
+            res = RMemoryFactory::fetch_remote_mr(
                 mr_id, remote_id, mr);
             if (t.passed_msec() > timeout)
             {
@@ -43,7 +43,6 @@ public:
             }
             // TODO: add some nop to prevent keep connecting
         } while (!(res == ERR || res == SUCC));
-
         return std::make_pair(res, mr);
     }
 
