@@ -11,9 +11,11 @@ private:                                   \
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define likely(x) __builtin_expect(!!(x), 1)
 
+#define NOT_INLE __attribute__((noinline))
 #define ALWAYS_INLINE __attribute__((always_inline))
 
-static inline unsigned long read_tsc(void)
+static inline unsigned long
+read_tsc(void)
 {
   unsigned a, d;
   __asm __volatile("rdtsc"
