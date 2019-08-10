@@ -23,7 +23,6 @@ using namespace rdmaio;
  */
 class SROp
 {
-private:
   RCQP *qp = nullptr;
   ibv_wr_opcode op;
 
