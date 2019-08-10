@@ -47,7 +47,8 @@ public:
         return *this;
     }
 
-    Result_mr_t get_mr(u64 mr_id, double timeout = Timer::no_timeout)
+    auto get_mr(u64 mr_id, double timeout = Timer::no_timeout)
+        -> Result_mr_t
     {
         this->set_timeout(timeout);
         return execute<RemoteMemory::Attr, u64>(
