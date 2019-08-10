@@ -67,9 +67,8 @@ public:
     return *this;
   }
 
-  using Result_t = std::tuple<IOStatus, struct ibv_wc>;
-
-  inline Result_t execute(R2_ASYNC)
+  inline auto execute(R2_ASYNC)
+      -> std::tuple<IOStatus, struct ibv_wc>
   {
     return execute(IBV_SEND_SIGNALED, R2_ASYNC_WAIT);
   }
@@ -77,7 +76,8 @@ public:
   /*!
    TODO: add timeout
    */
-  inline Result_t execute_sync()
+  inline auto execute_sync()
+      -> std::tuple<IOStatus, struct ibv_wc>
   {
     ibv_wc wc;
     auto res = qp->send(
@@ -91,7 +91,8 @@ public:
     return std::make_pair(res, wc);
   }
 
-  inline Result_t execute(int flags, R2_ASYNC)
+  inline auto execute(int flags, R2_ASYNC)
+      -> std::tuple<IOStatus, struct ibv_wc>
   {
     ibv_wc wc;
     auto res = qp->send(
