@@ -2,53 +2,53 @@
 
 #include "common.hpp"
 
-#include <pthread.h>
 #include <functional>
+#include <pthread.h>
 
 namespace r2 {
 
-/**
- * A simple wrapper over pthread APIs
- */
-typedef std::function<void *(void) > run_func_t;
+template<typename T = int>
+class alignas(128) Thread
+{
+  using thread_body_t = std::function<T(void)>;
 
-template <typename T = int>
-class Thread {
- public:
-  Thread() {
-  }
+  thread_body_t core_func;
+  T res;
+  pthread_t pid; // pthread id
 
-  void start() {
-    running_ = true;
+public:
+  explicit Thread(const thread_body_t& b)
+    : core_func(b)
+  {}
+
+  void start()
+  {
     pthread_attr_t attr;
     ASSERT(pthread_attr_init(&attr) == 0);
-    ASSERT(pthread_create(&pid_, &attr, pthread_bootstrap, (void *) this) == 0);
+    ASSERT(pthread_create(&pid, &attr, pthread_bootstrap, (void*)this) == 0);
     ASSERT(pthread_attr_destroy(&attr) == 0);
   }
 
-  T join() {
-    running_ = false;
-    ASSERT(pthread_join(pid_,nullptr) == 0);
-    return res;
+  T join()
+  {
+    ASSERT(pthread_join(pid, nullptr) == 0);
+    return get_res();
   }
 
-  virtual void *run_body() = 0;
+  T get_res() const { return res; }
 
- protected:
-  bool running_ = false;
-  T    res;
+private:
+  // TODO: what if the sizeof(T) is very large?
+  static_assert(sizeof(T) < (128 - sizeof(thread_body_t) - sizeof(pthread_t)),
+                "xx");
+  char padding[128 - (sizeof(thread_body_t) + sizeof(T) + sizeof(pthread_t))];
 
- private:
-  pthread_t  pid_;      // pthread id
-
-  // a simple wrapper to call
-  static void *pthread_bootstrap(void *p) {
-    Thread *self = static_cast<Thread *>(p);
-    self->run_body();
+  static void* pthread_bootstrap(void* p)
+  {
+    Thread* self = static_cast<Thread*>(p);
+    self->res = self->core_func();
     return nullptr;
   }
+};
 
-  DISABLE_COPY_AND_ASSIGN(Thread);
-}; // class thread
-
-} // namespace r2
+}

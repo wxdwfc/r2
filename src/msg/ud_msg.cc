@@ -36,6 +36,7 @@ UdAdapter::connect(const Addr& addr, const rdmaio::MacID& id, int uid)
 
   QPAttr fetched_attr;
   auto ret = QPFactory::fetch_qp_addr(QPFactory::UD, uid, id, fetched_attr);
+
   if (ret == SUCC) {
     auto ah = create_ah(qp_, fetched_attr);
     if (ah == nullptr)
@@ -124,8 +125,6 @@ UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
       ASSERT(false) << "faild to get the cq event";
     }
 
-    ibv_ack_cq_events(ev_cq, 1);
-
     if (ibv_req_notify_cq(ev_cq, 1)) {
       ASSERT(false) << "Couldn't request CQ notification";
     }
@@ -143,6 +142,9 @@ UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
     } else {
       ASSERT(false) << "error wc status " << receiver_.wcs_[i].status;
     }
+  }
+  if (qp_->event_channel) {
+    ibv_ack_cq_events(qp_->recv_cq_, 1);
   }
   flush_pending();
   current_idle_recvs_ += poll_result;
