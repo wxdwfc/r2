@@ -7,6 +7,19 @@
 
 namespace r2 {
 
+/*!
+  This is a simple wrapper over pthread, which uses a more abstracted way to create threads.
+  T: the return type of the thread.
+
+  Example:
+  To create one thread using the function `fn run() -> T`, one can use the following way:
+    auto t = Thread<T>([]() -> T {
+        T res;
+        return res;
+    });
+    t.start(); // really run the thread
+    t.join();  // wait for it to stop
+ */
 template<typename T = int>
 class alignas(128) Thread
 {
