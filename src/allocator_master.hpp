@@ -8,6 +8,32 @@
 
 namespace r2 {
 
+/*!
+  AllocatorMaster provide a way to manage user's heap in a scalable way.
+  The user's heap may be an RDMA registered memory.
+  It's core is based on jemalloc with 'je' as prefix.
+
+  - Example of init the heap
+  Suppose we want to init the heap identified as id 73, with buffer (ptr,4KB size); we do the following:
+
+      AllocatorMaster<73>::init(ptr,4KB);
+
+  - Example of using an allocator
+  At each thread, we can use:
+  use Alloc = AllocatorMaster<73>;
+
+      char *ptr = (char *)(Alloc::get_thread_allocator()->alloc(4096); // similar to `char *ptr = malloc(4096);`
+      Alloc::get_thread_allocator()->dealloc(ptr);                     // similar to `free(ptr);`
+
+  Alternatively, one can use its dedicated allocator, like following:
+      auto allocator = AllocatorMaster<73>::get_allocator();
+      char *ptr = allocator->alloc(4096);
+      // ... do something
+      allocator->dealloc(ptr);
+
+  - About concurrency
+  Different allocator works in parallel.
+ */
 template <int NAME = 0>
 class AllocatorMaster {
  public:

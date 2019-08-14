@@ -57,6 +57,7 @@ TEST(Msg, UD) {
         SUCC);
 
     int total_msg_count = 512;
+
     char *send_buf =
         (char *)(AllocatorMaster<0>::get_thread_allocator()->alloc(4096));
     for (uint i = 0; i < total_msg_count; ++i) {
