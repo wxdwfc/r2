@@ -22,6 +22,6 @@ add_executable(oserver examples/basic_onesided_rdma/server.cc ${R_SOURCES})
 
 foreach(app ${apps})
   target_link_libraries(${app} boost_coroutine boost_chrono boost_thread boost_context boost_system ibverbs ${jemalloc_lib} pthread gflags)
-  add_dependencies(${app} libboost1.61 ralloc)
+  add_dependencies(${app} libboost1.61)
 endforeach(app)
 
