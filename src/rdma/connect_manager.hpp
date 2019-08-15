@@ -1,7 +1,10 @@
 #pragma once
 
+#include "connect_handlers.hpp"
+
 #include "../src/common.hpp"
 #include "../src/timer.hpp"
+
 #include "rlib/rdma_ctrl.hpp"
 
 namespace r2 {
@@ -56,6 +59,54 @@ public:
         return std::make_pair(RMemoryFactory::fetch_remote_mr(mr, id, attr),
                               attr);
       });
+  }
+
+  /*!
+    Ask remote to create a QP for "qp" to connect, the remote QP with id
+    remote_id, and attribute config.
+   */
+  IOStatus cc_for_rc(RCQP* qp,
+                     const ConnectHandlers::CCReq& req,
+                     const QPConfig& config,
+                     double timeout = Timer::no_timeout)
+  {
+    this->set_timeout(timeout);
+    auto ret = execute<QPAttr, ConnectHandlers::CCReq>(
+      req,
+      [&](const ConnectHandlers::CCReq& test,
+          const MacID& id) -> std::tuple<IOStatus, QPAttr> {
+        QPAttr dummy;
+
+        SimpleRPC sr(std::get<0>(id), std::get<1>(id));
+        if (!sr.valid()) {
+          return std::make_pair(ERR, dummy);
+        }
+
+        Buf_t reply;
+        sr.emplace((u8)CreateConnect, Marshal::serialize_to_buf(req), &reply);
+        auto ret = sr.execute(sizeof(ConnectHandlers::CCReply),
+                              ::rdmaio::default_timeout);
+
+        // finally we parse the execute results
+        if (ret == SUCC) {
+          // demarshal the data
+          ASSERT(reply.size() >= sizeof(ConnectHandlers::CCReply));
+          ConnectHandlers::CCReply decoded_reply =
+            Marshal::deserialize<ConnectHandlers::CCReply>(reply);
+
+          if (decoded_reply.res == SUCC) {
+            return std::make_pair(SUCC, decoded_reply.attr);
+          } else {
+            ret = decoded_reply.res;
+          }
+        }
+        return std::make_pair(ret, dummy);
+      });
+    // then we connect our QP
+    if (std::get<0>(ret) == SUCC) {
+      return qp->connect(std::get<1>(ret), config);
+    }
+    return std::get<0>(ret);
   }
 
   IOStatus connect_for_rc(RCQP* qp,

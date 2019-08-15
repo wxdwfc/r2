@@ -5,7 +5,6 @@
 
 DEFINE_string(server_host, "localhost", "Server host used.");
 DEFINE_int64(server_port, 8888, "Server port used.");
-DEFINE_int64(qp_id, 73, "server's qp id. should be equal at server.");
 DEFINE_int64(mr_id, 73, "server's mr id. should be equal at server.");
 
 using namespace r2;
@@ -23,20 +22,25 @@ main(int argc, char** argv)
   // a local buffer to store for local communication
   char* local_buffer = new char[1024];
 
-  // open the first RDMA nic found
-  // Note, we assume that there are RDMA NIC
-  RNic nic(RNicInfo::query_dev_names()[0]);
+  std::vector<RNic*> nics;
+  for (auto n : RNicInfo::query_dev_names()) {
+    nics.push_back(new RNic(n));
+  }
 
   // RDMACtrl is the control hook of rlib.
   // All others bootstrap with it
   RdmaCtrl ctrl(FLAGS_server_port);
 
-  ASSERT(ctrl.mr_factory.register_mr(FLAGS_mr_id, local_buffer, 1024, nic) ==
-         SUCC);
+  for (uint i = 0; i < nics.size(); ++i) {
+    auto& nic = *nics[i];
+    ASSERT(ctrl.mr_factory.register_mr(
+             FLAGS_mr_id + i, local_buffer, 1024, nic) == SUCC);
+  }
 
-  rdma::ConnectHandlers::register_cc_handler(ctrl, nic);
+  rdma::ConnectHandlers::register_cc_handler(ctrl, nics);
 
   // Then the server just sleep
+  LOG(2) << "server enter sleep because it is RDMA :)";
   while (true) {
     sleep(1);
   }

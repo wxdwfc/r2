@@ -7,7 +7,6 @@
 
 DEFINE_string(server_host, "localhost", "Server host used.");
 DEFINE_int64(server_port, 8888, "Server port used.");
-DEFINE_int64(qp_id, 73, "server's qp id. should be equal at server.");
 DEFINE_int64(mr_id, 73, "server's mr id. should be equal at server.");
 
 using namespace r2;
@@ -40,7 +39,8 @@ main(int argc, char** argv)
 
   // open the first RDMA nic found
   // Note, we assume that there are RDMA NIC
-  RNic nic(RNicInfo::query_dev_names()[0]);
+  usize nic_id = 0; // we use the first nic found
+  RNic nic(RNicInfo::query_dev_names()[nic_id]);
 
   // we register our local buffer to server with the default flags
   RemoteMemory mr(local_buffer, 1024, nic, MemoryFlags());
@@ -49,14 +49,26 @@ main(int argc, char** argv)
   // Then we fetch the remote MR
   // We use R2's connectmanager for easy setup
   rdma::SyncCM cm(::rdmaio::make_id(FLAGS_server_host, FLAGS_server_port));
-  auto res = cm.get_mr(FLAGS_mr_id); // this function will retry if failed
+  auto res =
+    cm.get_mr(FLAGS_mr_id + nic_id); // this function will retry if failed
   ASSERT(std::get<0>(res) == SUCC);
 
   // With both remote/local MR, we can create the qp using the default QPConfig
   RCQP* qp = new RCQP(nic, std::get<1>(res), mr.get_attr(), QPConfig());
 
   // do the connect, similar to TCP connect
-  ASSERT(cm.connect_for_rc(qp, FLAGS_qp_id, QPConfig()) == SUCC);
+  // create a QP at remote and connect to it
+  auto ret =
+    cm.cc_for_rc(qp,
+                 {
+                   .qp_id = 12, // the remote QP id for our connection
+                   .nic_id = 0, // the remote NIC we want our QP to create at
+                   .attr = qp->get_attr(), // remote QP needs to connect
+                   .config = QPConfig(),   // we use the default connector
+                 },
+                 QPConfig());
+  ASSERT(ret == SUCC) << "get error ret: " << ret;
+  LOG(4) << "all connect done, start testing";
 
   // finally we sent the results
   sync_client(qp, local_buffer);
