@@ -37,8 +37,11 @@ TEST(TM, Scheduler)
     RScheduler r;
     r.spawnr([](R2_ASYNC) {
         R2_EXECUTOR.emplace(R2_COR_ID(), 1, [](std::vector<int> &) {
+            // wait for a future which never schedules the routine back
             return std::make_pair(NOT_READY, 0);
         });
+
+        // wait for 10000 cycles and test we do timeout
         auto res = R2_WAIT_FOR(10000);
         ASSERT_EQ(res, TIMEOUT);
     });
