@@ -9,6 +9,26 @@
 #include <deque>
 #include <vector>
 
+/*!
+  RScheduler is the executor who execute R2 routines. 
+  An example usage is: 
+  `
+    RScheduler s;
+    s.spawnr([](R2_ASYNC) {
+      R2_RET;
+    });
+    s.run();
+  `
+  This spawns a corutine which does nothing. 
+  
+  In each coroutine, applications can execute multiple R2 calls. 
+  For example:
+  `
+  R2_RET; // coroutine should return with R2_RET key world. Otherwise, the behavior is undefined. 
+  R2_YIELD; // yield this coroutine to another;
+  `
+  For more keyword, please refer to scheduler_macros.hpp. 
+*/
 namespace r2
 {
 

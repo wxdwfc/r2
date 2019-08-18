@@ -16,6 +16,9 @@
         auto id = R2_COR_ID();
     - Coroutine ret.
         R2_RET;
+    - Add a timeout for yield coroutine.
+        R2_WAIT_FOR(1000); // in cycles
+        \note: this call must follows a pause_and_yield; 
  */
 namespace r2
 {
