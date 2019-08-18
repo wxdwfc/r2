@@ -41,7 +41,7 @@ TEST(TM, Scheduler)
             return std::make_pair(NOT_READY, 0);
         });
 
-        // wait for 10000 cycles and test we do timeout
+        // yield, then wait for 10000 cycles and test we do timeout
         auto res = R2_WAIT_FOR(10000);
         ASSERT_EQ(res, TIMEOUT);
     });
