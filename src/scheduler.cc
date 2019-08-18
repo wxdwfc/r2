@@ -80,6 +80,13 @@ void RScheduler::poll_all()
       ASSERT(false) << "poll an invalid future return value: " << ret;
     }
   } // end iterate all pending futures
+
+  // now we check timeout events
+  TMIter it(tm, read_tsc());
+  while (it.valid())
+  {
+    add(it.next(), TIMEOUT);
+  }
 } // end poll_all
 
 } // end namespace r2

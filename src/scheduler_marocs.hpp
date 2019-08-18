@@ -40,11 +40,21 @@ namespace r2
 
 #define R2_STOP() _r.stop_schedule();
 
-#define R2_PAUSE_WAIT(poll_func, num)                     \
-    {                                                     \
+#define R2_WAIT_FUTURE(poll_func, num, time)              \
+    ({                                                    \
         R2_EXECUTOR.emplace(R2_COR_ID(), num, poll_func); \
-        R2_PAUSE_AND_YIELD;                               \
-    }
+        auto res = R2_EXECUTOR.wait_for(time, yield);     \
+        res;                                              \
+    })
+
+#define R2_WAIT_FOR(time) R2_EXECUTOR.wait_for(time, yield);
+
+#define R2_PAUSE_WAIT(poll_func, num)                     \
+    ({                                                    \
+        R2_EXECUTOR.emplace(R2_COR_ID(), num, poll_func); \
+        auto ret = R2_PAUSE_AND_YIELD;                    \
+        ret;                                              \
+    })
 
 #define R2_WAIT(poll_func, ret)                                         \
     {                                                                   \

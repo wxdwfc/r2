@@ -1,6 +1,7 @@
 #pragma once
 
 #include "futures/future.hpp"
+#include "timeout_manager.hpp"
 #include "rexecutor.hpp"
 
 #include "rlib/common.hpp"
@@ -23,7 +24,7 @@ public:
   // schedule?
 private:
   Futures poll_futures_;
-
+  TM tm;
   bool running_ = true;
 
 public:
@@ -44,11 +45,26 @@ public:
     poll_futures_.push_back(f);
   }
 
+  void wait_for(const u64 &time)
+  {
+    tm.enqueue(cur_id(), read_tsc() + time, cur_routine_->seq);
+  }
+
+  IOStatus wait_for(const u64 &time, handler_t &yield)
+  {
+    if (pending_futures_[cur_id()] > 0)
+    {
+      wait_for(time);
+      return pause_and_yield(yield);
+    }
+    return SUCC;
+  }
 
   IOStatus pause(handler_t &yield)
   {
     if (pending_futures_[cur_id()] > 0)
-      pause_and_yield(yield);
+      return pause_and_yield(yield);
+    return SUCC;
   }
 
   /**

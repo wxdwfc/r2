@@ -141,7 +141,7 @@ public:
         return std::make_pair(NOT_READY, 0);
       };
       // if the request is signaled, we emplace a poll future
-      R2_PAUSE_WAIT(poll_future, 1);
+      res = R2_PAUSE_WAIT(poll_future, 1);
       // the results will be encoded in wc, so its fine
       /*
         Actually we can use YIELD, to avoid a future.

@@ -32,9 +32,9 @@ class RoutineLink
     Routine *next_routine_ = nullptr;
     bool active_ = false;
     IOStatus status = SUCC;
-
     // my id
     const u8 id_;
+    u32 seq = 0;
 
     // a wrapper over status
     std::shared_ptr<internal_routine_t> unwrapperd_fuc_;

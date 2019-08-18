@@ -56,6 +56,13 @@ public:
     routines_[idx].func_();
   }
 
+  inline void add(const std::pair<u8, u32> &e, IOStatus status)
+  {
+    if (routines_[e.first].seq == e.second)
+    {
+      add(e.first, status);
+    }
+  }
   /**
    * add a pre-spawned coroutine back to the list
    */
@@ -64,6 +71,7 @@ public:
     if (likely(!routines_[cor_id].active_))
     {
       routines_[cor_id].status = status;
+      routines_[cor_id].seq += 1;
       chain_.append(&(routines_[cor_id]));
     }
     else
