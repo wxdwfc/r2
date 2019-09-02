@@ -27,9 +27,10 @@ class RPCHandler {
     Buf_t info = Buf_t(msg,size);
     if(rpc.msg_handler_->connect_from_incoming(ctx.dest,info) != SUCC) {
       // TODO, handle such errors
+      ASSERT(false);
     }
     char *reply_buf = rpc.get_buf_factory().get_inline_buf();
-    rpc.reply(ctx,reply_buf,0);
+    ASSERT(rpc.reply(ctx,reply_buf,0) == SUCC);
   }
 
   static void stop_handshake_handler(RPC &rpc,const Req::Meta &ctx,const char *msg,u32 size) {

@@ -111,6 +111,7 @@ RPC::start_handshake(const Addr &dest, RScheduler &s, handler_t &h)
     return ret;
   }
   ret = s.pause_and_yield(h);
+
   return ret;
 }
 
@@ -150,7 +151,6 @@ void RPC::poll_all(RScheduler &s, std::vector<int> &routine_count)
     }
     else if (header->type == REPLY)
     {
-
       sanity_check_reply(header);
       memcpy(replies_[header->cor_id].reply_buf,
              (char *)(header) + sizeof(Req::Header),

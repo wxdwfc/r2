@@ -5,29 +5,27 @@
 
 using namespace rdmaio;
 
-namespace r2 {
+namespace r2
+{
 
 const int max_idle_num = 1;
 
-UdAdapter::UdAdapter(const Addr& my_addr, UDQP* sqp, UDQP* qp)
-  : my_addr(my_addr)
-  , send_qp_(sqp)
-  , qp_(qp ? qp : sqp)
-  , sender_(my_addr, qp_->local_mem_.key)
-  , receiver_(qp_)
+UdAdapter::UdAdapter(const Addr &my_addr, UDQP *sqp, UDQP *qp)
+    : my_addr(my_addr), send_qp_(sqp), qp_(qp ? qp : sqp), sender_(my_addr, qp_->local_mem_.key), receiver_(qp_)
 {
 #if R2_SOLICITED
-  if (qp_->event_channel) {
+  if (qp_->event_channel)
+  {
     LOG(2) << "R2 msg use event handlers.";
   }
 #endif
 }
 
-static ibv_ah*
-create_ah(UDQP* qp, const QPAttr& attr);
+static ibv_ah *
+create_ah(UDQP *qp, const QPAttr &attr);
 
 IOStatus
-UdAdapter::connect(const Addr& addr, const rdmaio::MacID& id, int uid)
+UdAdapter::connect(const Addr &addr, const rdmaio::MacID &id, int uid)
 {
 
   // check if we already connected
@@ -37,31 +35,36 @@ UdAdapter::connect(const Addr& addr, const rdmaio::MacID& id, int uid)
   QPAttr fetched_attr;
   auto ret = QPFactory::fetch_qp_addr(QPFactory::UD, uid, id, fetched_attr);
 
-  if (ret == SUCC) {
+  if (ret == SUCC)
+  {
     auto ah = create_ah(qp_, fetched_attr);
     if (ah == nullptr)
+    {
+      ASSERT(false);
       return ERR;
-    UdConnectInfo connect_info = { .address_handler = ah,
-                                   .remote_qpn = fetched_attr.qpn,
-                                   .remote_qkey = fetched_attr.qkey };
+    }
+    UdConnectInfo connect_info = {.address_handler = ah,
+                                  .remote_qpn = fetched_attr.qpn,
+                                  .remote_qkey = fetched_attr.qkey};
     connect_infos_.insert(std::make_pair(addr.to_u32(), connect_info));
     return SUCC;
-  } else
+  }
+  else
     return ret;
 }
 
 IOStatus
-UdAdapter::send_async(const Addr& addr, const char* msg, int size)
+UdAdapter::send_async(const Addr &addr, const char *msg, int size)
 {
 
-  auto& wr = sender_.cur_wr();
-  auto& sge = sender_.cur_sge();
+  auto &wr = sender_.cur_wr();
+  auto &sge = sender_.cur_sge();
 
-  const auto& it = connect_infos_.find(addr.to_u32());
+  const auto &it = connect_infos_.find(addr.to_u32());
   if (unlikely(it == connect_infos_.end()))
     return NOT_CONNECT;
 
-  const auto& link_info = it->second;
+  const auto &link_info = it->second;
 
   wr.wr.ud.ah = link_info.address_handler;
   wr.wr.ud.remote_qpn = link_info.remote_qpn;
@@ -74,12 +77,15 @@ UdAdapter::send_async(const Addr& addr, const char* msg, int size)
   wr.send_flags |= IBV_SEND_SOLICITED;
 #endif
 
-  if (send_qp_->need_poll()) {
+  if (send_qp_->need_poll())
+  {
     ibv_wc wc;
     auto ret = ::rdmaio::QPUtily::wait_completion(send_qp_->cq_, wc);
     ASSERT(ret == SUCC) << "poll UD completion reply error: " << ret;
     send_qp_->clear();
-  } else {
+  }
+  else
+  {
     send_qp_->forward(1);
   }
   sge.addr = (uintptr_t)msg;
@@ -99,11 +105,11 @@ UdAdapter::flush_pending()
   return sender_.flush_pending(send_qp_);
 }
 
-int
-UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
+int UdAdapter::poll_all(const MsgProtocol::msg_callback_t &f)
 {
 #if R2_SOLICITED
-  if (qp_->event_channel) {
+  if (qp_->event_channel)
+  {
 #if 0
     struct pollfd my_pollfd;
     my_pollfd.fd = qp_->event_channel->fd;
@@ -116,39 +122,47 @@ UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
       return 0;
 #endif
     // There is events, get it
-    void* ev_ctx;
-    struct ibv_cq* ev_cq;
+    void *ev_ctx;
+    struct ibv_cq *ev_cq;
 
     // waiting for in-coming requests
     // XD: fixme: this is a blocking call
-    if (ibv_get_cq_event(qp_->event_channel, &ev_cq, &ev_ctx)) {
+    if (ibv_get_cq_event(qp_->event_channel, &ev_cq, &ev_ctx))
+    {
       ASSERT(false) << "faild to get the cq event";
     }
 
-    if (ibv_req_notify_cq(ev_cq, 1)) {
+    if (ibv_req_notify_cq(ev_cq, 1))
+    {
       ASSERT(false) << "Couldn't request CQ notification";
     }
   }
 #endif
   uint poll_result =
-    ibv_poll_cq(qp_->recv_cq_, MAX_UD_RECV_SIZE, receiver_.wcs_);
-  for (uint i = 0; i < poll_result; ++i) {
-    if (likely(receiver_.wcs_[i].status == IBV_WC_SUCCESS)) {
+      ibv_poll_cq(qp_->recv_cq_, MAX_UD_RECV_SIZE, receiver_.wcs_);
+  for (uint i = 0; i < poll_result; ++i)
+  {
+    if (likely(receiver_.wcs_[i].status == IBV_WC_SUCCESS))
+    {
       Addr addr;
       addr.from_u32(receiver_.wcs_[i].imm_data);
-      f((const char*)(receiver_.wcs_[i].wr_id + GRH_SIZE),
+      f((const char *)(receiver_.wcs_[i].wr_id + GRH_SIZE),
         MAX_UD_PACKET_SIZE,
         addr);
-    } else {
+    }
+    else
+    {
       ASSERT(false) << "error wc status " << receiver_.wcs_[i].status;
     }
   }
-  if (qp_->event_channel) {
+  if (qp_->event_channel)
+  {
     ibv_ack_cq_events(qp_->recv_cq_, 1);
   }
   flush_pending();
   current_idle_recvs_ += poll_result;
-  if (current_idle_recvs_ > max_idle_num) {
+  if (current_idle_recvs_ > max_idle_num)
+  {
     ASSERT(receiver_.post_recvs(qp_, current_idle_recvs_) == SUCC);
     current_idle_recvs_ = 0;
   }
@@ -156,15 +170,14 @@ UdAdapter::poll_all(const MsgProtocol::msg_callback_t& f)
   return poll_result;
 }
 
-Buf_t
-UdAdapter::get_my_conninfo()
+Buf_t UdAdapter::get_my_conninfo()
 {
   QPAttr res = qp_->get_attr();
   return Marshal::serialize_to_buf(res);
 }
 
 IOStatus
-UdAdapter::connect_from_incoming(const Addr& addr, const Buf_t& connect_info)
+UdAdapter::connect_from_incoming(const Addr &addr, const Buf_t &connect_info)
 {
   QPAttr attr;
   if (!Marshal::deserialize(connect_info, attr))
@@ -173,20 +186,20 @@ UdAdapter::connect_from_incoming(const Addr& addr, const Buf_t& connect_info)
   if (ah == nullptr)
     return ERR;
 
-  UdConnectInfo info = { .address_handler = ah,
-                         .remote_qpn = attr.qpn,
-                         .remote_qkey = attr.qkey };
+  UdConnectInfo info = {.address_handler = ah,
+                        .remote_qpn = attr.qpn,
+                        .remote_qkey = attr.qkey};
   if (connect_infos_.find(addr.to_u32()) != connect_infos_.end())
     connect_infos_.erase(connect_infos_.find(addr.to_u32()));
   connect_infos_.insert(std::make_pair(addr.to_u32(), info));
   return SUCC;
 }
 
-void
-UdAdapter::disconnect(const Addr& addr)
+void UdAdapter::disconnect(const Addr &addr)
 {
 #if 1
-  if (connect_infos_.find(addr.to_u32()) != connect_infos_.end()) {
+  if (connect_infos_.find(addr.to_u32()) != connect_infos_.end())
+  {
     auto ah = connect_infos_[addr.to_u32()].address_handler;
     ibv_destroy_ah(ah);
     connect_infos_.erase(connect_infos_.find(addr.to_u32()));
@@ -200,8 +213,8 @@ UdAdapter::get_iter()
   return Iter_p_t(new UDIncomingIter(this));
 }
 
-static ibv_ah*
-create_ah(UDQP* qp, const QPAttr& attr)
+static ibv_ah *
+create_ah(UDQP *qp, const QPAttr &attr)
 {
   struct ibv_ah_attr ah_attr;
   ah_attr.is_global = 1;

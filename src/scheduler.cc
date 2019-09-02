@@ -82,11 +82,13 @@ void RScheduler::poll_all()
   } // end iterate all pending futures
 
   // now we check timeout events
+#if 1
   TMIter it(tm, read_tsc());
   while (it.valid())
   {
     add(it.next(), TIMEOUT);
   }
+#endif
 } // end poll_all
 
 } // end namespace r2
