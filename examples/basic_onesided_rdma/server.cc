@@ -22,20 +22,16 @@ main(int argc, char** argv)
   // a local buffer to store for local communication
   char* local_buffer = new char[1024];
 
-  std::vector<RNic*> nics;
-  for (auto n : RNicInfo::query_dev_names()) {
-    nics.push_back(new RNic(n));
-  }
+  r2::rdma::NicRegister nics;
+  nics.reg(0,new RNic(RNicInfo::query_dev_names()[0]));
 
   // RDMACtrl is the control hook of rlib.
   // All others bootstrap with it
   RdmaCtrl ctrl(FLAGS_server_port);
 
-  for (uint i = 0; i < nics.size(); ++i) {
-    auto& nic = *nics[i];
-    ASSERT(ctrl.mr_factory.register_mr(
-             FLAGS_mr_id + i, local_buffer, 1024, nic) == SUCC);
-  }
+  auto& nic = *(nics.get(0));
+  ASSERT(ctrl.mr_factory.register_mr(
+           FLAGS_mr_id, local_buffer, 1024, nic) == SUCC);
 
   rdma::ConnectHandlers::register_cc_handler(ctrl, nics);
 

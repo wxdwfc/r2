@@ -2,8 +2,10 @@
 
 #include "connect_handlers.hpp"
 
-#include "../src/common.hpp"
-#include "../src/timer.hpp"
+//#include "r2/src/common.hpp"
+//#include "r2/src/timer.hpp"
+#include "../timer.hpp"
+#include "../common.hpp"
 
 #include "rlib/rdma_ctrl.hpp"
 
@@ -99,6 +101,7 @@ public:
           } else {
             ret = decoded_reply.res;
           }
+        } else {
         }
         return std::make_pair(ret, dummy);
       });

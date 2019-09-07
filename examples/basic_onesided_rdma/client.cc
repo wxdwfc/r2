@@ -50,7 +50,7 @@ main(int argc, char** argv)
   // We use R2's connectmanager for easy setup
   rdma::SyncCM cm(::rdmaio::make_id(FLAGS_server_host, FLAGS_server_port));
   auto res =
-    cm.get_mr(FLAGS_mr_id + nic_id); // this function will retry if failed
+    cm.get_mr(FLAGS_mr_id); // this function will retry if failed
   ASSERT(std::get<0>(res) == SUCC);
 
   // With both remote/local MR, we can create the qp using the default QPConfig
