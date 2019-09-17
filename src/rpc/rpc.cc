@@ -83,14 +83,12 @@ RPC::reply_async(const Req::Meta &context, char *reply, int size)
       context.dest, (char *)header, sizeof(Req::Header) + size);
 }
 
-inline void
+inline bool
 RPC::sanity_check_reply(const Req::Header *header)
 {
-  ASSERT(header->cor_id < replies_.size());
-  // ASSERT(replies_[header->cor_id].reply_count > 0)<< "receive overflow reply
-  // for :"
-  //                                              << (int)(header->cor_id);
+  //ASSERT(header->cor_id < replies_.size());
   assert(replies_[header->cor_id].reply_count > 0);
+  return replies_[header->cor_id].reply_count > 0;
 }
 
 rdmaio::IOStatus
@@ -151,15 +149,16 @@ void RPC::poll_all(RScheduler &s, std::vector<int> &routine_count)
     }
     else if (header->type == REPLY)
     {
-      sanity_check_reply(header);
-      memcpy(replies_[header->cor_id].reply_buf,
-             (char *)(header) + sizeof(Req::Header),
-             header->payload);
-      replies_[header->cor_id].reply_buf += header->payload;
+      if(sanity_check_reply(header)) {
+        memcpy(replies_[header->cor_id].reply_buf,
+               (char *)(header) + sizeof(Req::Header),
+               header->payload);
+        replies_[header->cor_id].reply_buf += header->payload;
 
-      if (--(replies_[header->cor_id].reply_count) == 0)
-      {
-        s.add(header->cor_id, SUCC);
+        if (--(replies_[header->cor_id].reply_count) == 0)
+          {
+            s.add(header->cor_id, SUCC);
+          }
       }
     }
     else

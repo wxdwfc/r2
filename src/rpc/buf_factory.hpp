@@ -8,13 +8,13 @@ namespace r2 {
 namespace rpc {
 
 const uint MAX_INLINE_SIZE = 64;
-const uint MAX_ROLLING_IDX = 1024;
+const uint MAX_ROLLING_IDX = 2048;
 
 class BufFactory {
  public:
   explicit BufFactory(int padding) : extra_padding(padding) {
     for(uint i = 0;i < MAX_ROLLING_IDX; ++i) {
-      char *buf = alloc(MAX_INLINE_SIZE + extra_padding);
+      char *buf = alloc(8192);
       ASSERT(buf != nullptr);
       inline_bufs.push_back(buf);
     }
@@ -35,7 +35,7 @@ class BufFactory {
 
   char *get_inline_buf(int idx = 0) {
     //return &inline_bufs[idx * MAX_INLINE_SIZE] + extra_padding;
-    return inline_bufs[idx] + extra_padding;
+    return inline_bufs[idx];
   }
 
   char *get_inline() {

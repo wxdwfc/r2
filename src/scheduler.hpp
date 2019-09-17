@@ -42,6 +42,8 @@ public:
   // TODO, XD:
   // Shall we leave the futures per coroutine, instead poll all futures per
   // schedule?
+  //  const usize id = 0;
+
 private:
   Futures poll_futures_;
   TM tm;
@@ -49,6 +51,8 @@ private:
 
 public:
   RScheduler();
+
+  //RScheduler(usize id) : id(id) { }
 
   explicit RScheduler(const routine_t &f);
 

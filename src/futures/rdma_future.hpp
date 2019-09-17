@@ -63,7 +63,7 @@ public:
           }
           if (unlikely(cor_id != 0 && (wc.status != IBV_WC_SUCCESS))) {
             LOG(4) << "poll till completion error: " << wc.status << " "
-                   << ibv_wc_status_str(wc.status);
+                   << ibv_wc_status_str(wc.status) << " at scheduler with id: ";
             // TODO： we need to filter out timeout events
             return std::make_pair(NOT_READY,
                                   cor_id); // this SUCC only indicates the

@@ -97,7 +97,7 @@ class RPC {
 
   BufFactory                          buf_factory_;
 
-  void sanity_check_reply(const Req::Header *header);
+  bool sanity_check_reply(const Req::Header *header);
 
   DISABLE_COPY_AND_ASSIGN(RPC);
 }; // end class RPC

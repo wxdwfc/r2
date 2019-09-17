@@ -29,7 +29,7 @@ class Req {
   };
 
   // internal data structures used in RPC
-  struct Header {
+  struct __attribute__ ((packed)) Header {
     u32 type : 2;
     u32 rpc_id :  5;
     u32 payload : 18;
