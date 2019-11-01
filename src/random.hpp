@@ -76,12 +76,15 @@ public:
   }
 
   template <typename T = i64>
-  inline i64 rand_number(T min, T max)
+  inline T rand_number(T min, T max)
   {
-    return check_between_inclusive((i64)(next_uniform() * (max - min + 1) + min), min, max);
+    assert(max >= min);
+    return check_between_inclusive<T>(
+      static_cast<T>(next_uniform() * (max - min + 1)) + min, min, max);
   }
 
-  inline i64 check_between_inclusive(i64 v, i64 min, i64 max)
+  template <typename T = i64>
+  inline T check_between_inclusive(T v, T min, T max)
   {
     assert(v >= min);
     assert(v <= max);

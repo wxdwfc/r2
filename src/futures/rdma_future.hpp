@@ -38,7 +38,7 @@ public:
     }
   }
 
-  static void spawn_future(RScheduler& s, rdmaio::RCQP* qp, int num = 1)
+  static void spawn_future(RScheduler& s, rdmaio::RCQP* qp, int num = 1,int test_id =  0)
   {
     using namespace rdmaio;
     auto id = s.cur_id();
@@ -46,7 +46,7 @@ public:
       s.emplace(
         s.cur_id(),
         num,
-        [id, qp](std::vector<int>& routine_count) -> RScheduler::poll_result_t {
+        [test_id,id, qp](std::vector<int>& routine_count) -> RScheduler::poll_result_t {
           int cor_id;
           if (routine_count[id] == 0) {
             return std::make_pair(SUCC, id);

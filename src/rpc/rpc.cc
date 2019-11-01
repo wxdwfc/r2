@@ -161,8 +161,9 @@ void RPC::poll_all(RScheduler &s, std::vector<int> &routine_count)
           }
       }
     }
-    else
-      ASSERT(false) << "receive wrong rpc id:" << (int)header->type;
+    else {
+      //ASSERT(false) << "receive wrong rpc id:" << (int)header->type;
+    }
   });
 }
 
