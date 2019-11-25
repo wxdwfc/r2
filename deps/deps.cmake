@@ -2,17 +2,6 @@ cmake_minimum_required(VERSION 3.2)
 
 include( ExternalProject )
 
-## install & compile RLib's rmalloc
-set(SSMALLOC_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/rlib)
-ExternalProject_Add(ralloc
-  SOURCE_DIR ${SSMALLOC_INSTALL_DIR}/ralloc
-  CONFIGURE_COMMAND mkdir -p  ${SSMALLOC_INSTALL_DIR}/lib
-  BUILD_COMMAND make
-  BUILD_IN_SOURCE 1
-  INSTALL_COMMAND make install
-)
-set(LIBSSMALLOC_LIBRARIES ${SSMALLOC_INSTALL_DIR}/lib )
-
 set(jemalloc_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/jemalloc)
 ExternalProject_Add(jemalloc
 	       SOURCE_DIR ${CMAKE_SOURCE_DIR}/deps/jemalloc
@@ -27,8 +16,8 @@ include_directories(BEFORE ${CMAKE_SOURCE_DIR}/deps)
 ## install boost
 set( BOOST_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/boost )
 ExternalProject_Add(libboost1.61
-#  URL $ENV{HOME}/download/boost_1_61_0.tar.bz2
-  URL https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
+  URL $ENV{HOME}/download/boost_1_61_0.tar.bz2
+#  URL https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
 #  URL_HASH SHA256=a547bd06c2fd9a71ba1d169d9cf0339da7ebf4753849a8f7d6fdb8feee99b640
   CONFIGURE_COMMAND ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} --with-libraries=system,coroutine
   BUILD_COMMAND ./b2

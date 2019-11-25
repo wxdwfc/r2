@@ -25,6 +25,12 @@ include(examples/examples.cmake)
 
 enable_testing()
 
+
 add_test(NAME test COMMAND tests/coretest)
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose
                   DEPENDS tests/coretest )
+
+
+add_library(r2 src/logging.cc)
+target_include_directories (r2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+

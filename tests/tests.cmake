@@ -13,3 +13,7 @@ endif()
 
 target_link_libraries(coretest gtest gtest_main ${rocksdb_lib} ${mkl_rt_lib} ${boost_serialization_lib} ${jemalloc_lib} ibverbs boost_coroutine boost_chrono boost_thread boost_context boost_system)
 add_dependencies(coretest jemalloc )
+
+file(GLOB T_WO_SOURCES  "tests/test_list.cc")
+add_executable(coretest_wo_rdma ${T_WO_SOURCES} "src/logging.cc")
+target_link_libraries(coretest_wo_rdma gtest gtest_main)

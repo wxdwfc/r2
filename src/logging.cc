@@ -1,10 +1,10 @@
-#include "logging.hpp"
+#include "logging.hh"
 
 #include <iostream>
 
-using namespace std;
-
 namespace r2 {
+
+using namespace std;
 
 // control flags for color
 enum
