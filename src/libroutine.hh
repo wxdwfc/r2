@@ -47,7 +47,7 @@ namespace r2
 
 #define R2_RET R2_EXECUTOR.exit(yield);
 
-#define R2_STOP() _r.stop_schedule();
+#define R2_STOP() _r.stop();
 
 #define R2_WAIT_FUTURE(poll_func, num, time)              \
     ({                                                    \

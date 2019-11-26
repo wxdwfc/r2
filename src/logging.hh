@@ -78,7 +78,7 @@ enum loglevel {
 
 // a nice progrss printer
 // credits: razzak@stackoverflow
-inline ALWAYS_INLINE
+inline
 void PrintProgress(double percentage, const char *header = NULL,FILE *out = stdout) {
 
 #define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"

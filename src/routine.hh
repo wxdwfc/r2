@@ -39,5 +39,7 @@ public:
   inline void execute(yield_f &yield) {
     yield(core);
   }
+
+  void start() { core(); }
 };
 } // namespace r2

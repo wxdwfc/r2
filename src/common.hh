@@ -3,6 +3,7 @@
 #include <cinttypes>
 
 #include "./utils/option.hh"
+#include "./logging.hh"
 
 namespace r2 {
 

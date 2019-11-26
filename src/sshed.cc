@@ -12,6 +12,8 @@ static_assert(
  */
 SScheduler::SScheduler() : pending_futures(kMaxRoutineSupported, 0) {
 
+  routines.reserve(kMaxRoutineSupported);
+
   this->spawn([](R2_ASYNC) {
     while (R2_EXECUTOR.running) {
       // TODO, the body is not implemented
@@ -19,6 +21,7 @@ SScheduler::SScheduler() : pending_futures(kMaxRoutineSupported, 0) {
     }
     R2_RET;
   });
+  assert(cur_routine_ptr != nullptr);
 }
 
 Option<id_t> SScheduler::spawn(const sroutine_func_t &f) {

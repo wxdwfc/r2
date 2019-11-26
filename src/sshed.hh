@@ -73,7 +73,13 @@ public:
    */
   void emplace_for_routine(const id_t &id, usize num, poll_func_t);
 
+  void run() {
+    this->running = true;
+    routines.at(0).start();
+  }
+
   /**********************************************************************************************/
+
   /*! Note, the following functions must be called **inside** a specific coroutine, not outside */
   /*!
     Pause the current coroutine, and yield to others
@@ -103,5 +109,7 @@ public:
   }
 
   void exit(yield_f &f);
+
+  void stop() { this->running = false; }
 };
 } // namespace r2
