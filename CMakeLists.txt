@@ -16,8 +16,10 @@ if(NOT jemalloc_lib)
 
 endif()
 
+add_library(r2 src/logging.cc src/sshed.cc)
+target_include_directories (r2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 ## tests
-#add_subdirectory(tests)
 include(tests/tests.cmake)
 
 ## examples
@@ -31,6 +33,4 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose
                   DEPENDS tests/coretest )
 
 
-add_library(r2 src/logging.cc)
-target_include_directories (r2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

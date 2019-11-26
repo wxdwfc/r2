@@ -2,17 +2,17 @@
 
 #include <cinttypes>
 
-#include "option.hh"
+#include "./utils/option.hh"
 
 namespace r2 {
 
-typedef uint64_t u64;
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef int64_t i64;
-typedef uint8_t u8;
-typedef int8_t i8;
-typedef unsigned int usize;
+using u64 = uint64_t;
+using u32 = uint32_t;
+using u16 = uint16_t;
+using i64 = int64_t;
+using u8 = uint8_t;
+using i8 = int8_t;
+using usize = unsigned int;
 
 constexpr usize kCacheLineSize = 128;
 
@@ -32,21 +32,6 @@ private:                                                                       \
 
 #define NOT_INLE __attribute__((noinline))
 #define ALWAYS_INLINE __attribute__((always_inline))
-
-static inline unsigned long read_tsc(void) {
-  unsigned a, d;
-  __asm __volatile("rdtsc" : "=a"(a), "=d"(d));
-  return ((unsigned long)a) | (((unsigned long)d) << 32);
-}
-
-class RDTSC {
-public:
-  RDTSC() : start(read_tsc()) {}
-  unsigned long passed() const { return read_tsc() - start; }
-
-private:
-  unsigned long start;
-};
 
 static inline void compile_fence(void) { asm volatile("" ::: "memory"); }
 

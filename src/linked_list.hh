@@ -50,6 +50,7 @@ public:
   /*!
     \note: the n must be in the list
     \ret: the next element
+    TODO: what if there is only one coroutine ?
    */
   inline Node<T> *leave_one(Node<T> *n) {
     auto next = n->next_p;
