@@ -1,70 +1,54 @@
 #include <gtest/gtest.h>
 
-#include "../src/rdma/connect_manager.hpp"
-#include "../src/rdma/single_op.hpp"
+#include "rlib/core/lib.hh"
+#include "../src/rdma/sop.hh"
 
 namespace test
 {
-
-const int TCP_PORT = 9999;
-const int GLOBAL_MR_ID = 73;
 
 using namespace rdmaio;
 using namespace r2::rdma;
 using namespace r2;
 
-extern RdmaCtrl ctrl;
-
 TEST(RDMA, sop)
 {
-  u64 remote_addr = 0x12;
-  char *test_buffer = new char[1024];
-  Marshal::serialize_to_buf<u64>(73, test_buffer + remote_addr);
+  auto res = RNicInfo::query_dev_names();
+  ASSERT_FALSE(res.empty());
+  auto nic = std::make_shared<RNic>(res[0]);
+  ASSERT_TRUE(nic->valid());
 
-  auto all_devices = RNicInfo::query_dev_names();
-  ASSERT_FALSE(all_devices.empty());
+  auto config = QPConfig();
+  auto qpp = RC::create(nic, config).value();
+  ASSERT_TRUE(qpp->valid());
 
-  RNic nic(all_devices[0]);
+  // try send an RDMA request
+  // init the memory
+  auto mem = Arc<RMem>(new RMem(1024)); // allocate a memory with 1K bytes
+  ASSERT_TRUE(mem->valid());
 
-  {
-    ASSERT_EQ(
-        (ctrl.mr_factory.register_mr(GLOBAL_MR_ID, test_buffer, 1024, nic)),
-        SUCC);
+  // register it to the Nic
+  RegHandler handler(mem, nic);
+  ASSERT_TRUE(handler.valid());
 
-    SyncCM cm(::rdmaio::make_id("localhost", TCP_PORT));
-    auto res = cm.get_mr(GLOBAL_MR_ID);
-    ASSERT_EQ(std::get<0>(res), SUCC);
+  auto mr = handler.get_reg_attr().value();
 
-    // further check the contents of result
-    RemoteMemory::Attr local;
-    ctrl.mr_factory.fetch_local_mr(GLOBAL_MR_ID, local);
-    ASSERT_EQ(local.key, std::get<1>(res).key);
+  RC &qp = *qpp;
+  qp.bind_remote_mr(mr);
+  qp.bind_local_mr(mr);
 
-    RCQP *qp = new RCQP(nic, std::get<1>(res), local, QPConfig());
-    ASSERT_TRUE(qp->valid());
-    ASSERT(ctrl.qp_factory.register_rc_qp(0, qp));
+  // finally connect to myself
+  auto res_c = qp.connect(qp.my_attr());
+  RDMA_ASSERT(res_c == IOCode::Ok);
 
-    ASSERT_EQ(cm.connect_for_rc(qp, 0, QPConfig()), SUCC);
+  u64 *test_loc = reinterpret_cast<u64 *>(mem->raw_ptr);
+  *test_loc = 73;
+  ASSERT_NE(73, test_loc[1]); // use the next entry to store the read value
 
-    RScheduler r;
-    r.spawnr([&, qp, test_buffer](R2_ASYNC) {
-      ::r2::rdma::SROp op(qp);
-      op.set_payload(test_buffer, sizeof(u64));
-      op.set_remote_addr(remote_addr).set_op(IBV_WR_RDMA_READ);
+  SROp op;
+  op.set_payload(&test_loc[1],sizeof(u64)).set_remote_addr(0x0).set_read();
 
-      ASSERT_NE(*((u64 *)test_buffer), 73);
-      R2_EXECUTOR.wait_for(100000);
-      auto ret = op.execute(R2_ASYNC_WAIT);
-      ASSERT_EQ(std::get<0>(ret), SUCC);
-
-      r2::compile_fence();
-      ASSERT_EQ(*((u64 *)test_buffer), 73);
-      R2_STOP();
-      R2_RET;
-    });
-    r.run();
-  }
-
-  delete[] test_buffer;
+  auto ret = op.execute_sync(qpp,IBV_SEND_SIGNALED);
+  ASSERT(ret == IOCode::Ok);
+  ASSERT_EQ(test_loc[1],73);
 }
 } // namespace test

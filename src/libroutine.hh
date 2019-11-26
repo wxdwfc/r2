@@ -58,9 +58,16 @@ namespace r2
 
 #define R2_WAIT_FOR(time) R2_EXECUTOR.wait_for(time, yield);
 
+#define R2_WAIT_NUM(num)                                                       \
+  ({                                                                           \
+    R2_EXECUTOR.wait_num(R2_COR_ID(), num);                                    \
+    auto ret = R2_PAUSE_AND_YIELD;                                             \
+    ret;                                                                       \
+  })
+
 #define R2_PAUSE_WAIT(poll_func, num)                     \
     ({                                                    \
-        R2_EXECUTOR.emplace(R2_COR_ID(), num, poll_func); \
+        R2_EXECUTOR.emplace_for_routine(R2_COR_ID(), num, poll_func); \
         auto ret = R2_PAUSE_AND_YIELD;                    \
         ret;                                              \
     })

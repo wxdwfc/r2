@@ -71,11 +71,20 @@ public:
     This means that the coroutine (id) should wait at least (num) requests.
     The request is monitored by the poll_func_t.
    */
-  void emplace_for_routine(const id_t &id, usize num, poll_func_t);
+  void emplace_for_routine(const id_t &id, usize num, poll_func_t &f) {
+    wait_num(id,num);
+    futures.push_back(f);
+
+  }
+  void wait_num(const id_t &id, usize num) { pending_futures[id] += num; }
 
   void run() {
     this->running = true;
     routines.at(0).start();
+  }
+
+  usize pending_future(const id_t &id) const {
+    return pending_futures.at(id);
   }
 
   /**********************************************************************************************/
@@ -93,7 +102,7 @@ public:
   Result<> pause(yield_f &f) {
     if (pending_futures[cur_id()] > 0)
       return pause_and_yield(f);
-    return Ok();
+    return ::rdmaio::Ok();
   }
 
   void yield_to_next(yield_f &f) {
