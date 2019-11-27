@@ -151,7 +151,8 @@ public:
       };
 
       // end spawning future
-      if (qp_ptr->ongoing_signaled() > 0) {
+      if (qp_ptr->ongoing_signaled() == 1) {
+        // 1 means that I am the only one to wait for this QP
         auto ret = R2_PAUSE_WAIT(poll_future, 1);
         return ::rdmaio::transfer(ret, wc);
       } else {
