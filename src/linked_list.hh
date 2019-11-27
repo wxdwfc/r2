@@ -11,6 +11,11 @@ template <typename T> struct Node {
 
   explicit Node(const T &val) : val(val) {}
 
+  template <typename... Args> Node(Args... args) : val(args...) {}
+
+  ~Node() {
+  }
+
   Node *set_prev(Node *p) {
     this->prev_p = p;
     return this;
@@ -27,15 +32,13 @@ public:
   Node<T> *header_p = nullptr;
   Node<T> *tailer_p = nullptr;
 
-  bool null() const {
-    return header_p == nullptr;
-  }
+  bool null() const { return header_p == nullptr; }
 
   inline Node<T> *add(Node<T> *n) {
     auto prev = tailer_p;
 
     if (unlikely(null())) {
-      tailer_p = ( header_p = n);
+      tailer_p = (header_p = n);
       prev = n;
     }
     tailer_p->set_next(n);
@@ -60,6 +63,7 @@ public:
     if (tailer_p == n) {
       tailer_p = n->prev_p;
     }
+    n->set_prev(nullptr)->set_next(nullptr);
     return next;
   }
 
@@ -77,7 +81,6 @@ public:
 
     return res;
   }
-
 };
 
 } // namespace r2

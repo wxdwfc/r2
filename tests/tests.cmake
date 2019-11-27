@@ -15,4 +15,4 @@ add_dependencies(coretest jemalloc )
 
 file(GLOB T_WO_SOURCES  "tests/test_list.cc" "tests/test_rdtsc.cc" "tests/test_ssched.cc")
 add_executable(coretest_wo_rdma ${T_WO_SOURCES} "src/logging.cc")
-target_link_libraries(coretest_wo_rdma gtest gtest_main r2 boost_context boost_system boost_coroutine boost_thread)
+target_link_libraries(coretest_wo_rdma gtest gtest_main boost_context boost_system boost_coroutine boost_thread boost_chrono r2)

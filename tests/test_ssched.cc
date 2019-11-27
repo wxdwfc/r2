@@ -17,6 +17,7 @@ TEST(SSched, Basic) {
       counter += 1;
       if (i == 11)
         R2_STOP();
+      //LOG(2) << "inc done";
       R2_RET;
     });
 #endif

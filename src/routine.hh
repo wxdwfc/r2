@@ -36,6 +36,8 @@ public:
   Routine(const id_t &id, std::shared_ptr<routine_func_t> f)
     : id(id), raw_f(f), core(*f), status(::rdmaio::Ok()) {}
 
+  ~Routine() = default;
+
   inline void execute(yield_f &yield) {
     yield(core);
   }

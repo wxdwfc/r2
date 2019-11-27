@@ -50,5 +50,23 @@ TEST(RDMA, sop)
   auto ret = op.execute_sync(qpp,IBV_SEND_SIGNALED);
   ASSERT(ret == IOCode::Ok);
   ASSERT_EQ(test_loc[1],73);
+
+  // now we test async op
+  bool runned = false;
+  SScheduler ssched;
+  ssched.spawn([qpp, test_loc, &op, &runned](R2_ASYNC) {
+    op.set_write();
+    test_loc[1] = 52;
+    ASSERT_NE(test_loc[0], 52);
+    auto ret = op.execute(qpp, IBV_SEND_SIGNALED, R2_ASYNC_WAIT);
+    ASSERT(ret == IOCode::Ok);
+    ASSERT_EQ(test_loc[0], 52);
+    runned = true;
+
+    R2_STOP();
+    R2_RET;
+  });
+  ssched.run();
+  ASSERT_TRUE(runned);
 }
 } // namespace test

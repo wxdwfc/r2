@@ -45,9 +45,9 @@ class SScheduler {
     Each elemenent in routine_chain stores **pointers to** routines vector
     element
    */
-  LinkedList<Routine *> routine_chain;
-  std::vector<Routine> routines;
-  Node<Routine *> *cur_routine_ptr = nullptr;
+  LinkedList<Routine> routine_chain;
+  std::vector<Node<Routine> *> routines;
+  Node<Routine> *cur_routine_ptr = nullptr;
 
   std::vector<usize> pending_futures;
 
@@ -57,6 +57,8 @@ class SScheduler {
   std::deque<poll_func_t> futures;
 
   volatile bool running = false;
+
+  void poll_all_futures();
 
 public:
   SScheduler();
@@ -72,31 +74,29 @@ public:
     The request is monitored by the poll_func_t.
    */
   void emplace_for_routine(const id_t &id, usize num, poll_func_t &f) {
-    wait_num(id,num);
+    wait_num(id, num);
     futures.push_back(f);
-
   }
   void wait_num(const id_t &id, usize num) { pending_futures[id] += num; }
 
   void run() {
     this->running = true;
-    routines.at(0).start();
+    routines.at(0)->val.start();
   }
 
-  usize pending_future(const id_t &id) const {
-    return pending_futures.at(id);
-  }
+  usize pending_future(const id_t &id) const { return pending_futures.at(id); }
 
   /**********************************************************************************************/
 
-  /*! Note, the following functions must be called **inside** a specific coroutine, not outside */
+  /*! Note, the following functions must be called **inside** a specific
+   * coroutine, not outside */
   /*!
     Pause the current coroutine, and yield to others
    */
   Result<> pause_and_yield(yield_f &f) {
     cur_routine_ptr = routine_chain.leave_one(cur_routine_ptr);
-    cur_routine_ptr->val->execute(f);
-    return cur_routine_ptr->val->status;
+    cur_routine_ptr->val.execute(f);
+    return cur_routine_ptr->val.status;
   }
 
   Result<> pause(yield_f &f) {
@@ -109,13 +109,11 @@ public:
     auto temp = cur_routine_ptr;
     cur_routine_ptr = cur_routine_ptr->next_p;
 
-    if(likely(temp != cur_routine_ptr))
-      cur_routine_ptr->val->execute(f);
+    if (likely(temp != cur_routine_ptr))
+      cur_routine_ptr->val.execute(f);
   }
 
-  id_t cur_id() const {
-    return cur_routine_ptr->val->id;
-  }
+  id_t cur_id() const { return cur_routine_ptr->val.id; }
 
   void exit(yield_f &f);
 

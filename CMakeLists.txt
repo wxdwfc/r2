@@ -18,6 +18,7 @@ endif()
 
 add_library(r2 src/logging.cc src/sshed.cc)
 target_include_directories (r2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(r2 boost_context boost_system boost_coroutine boost_thread boost_chrono)
 
 ## tests
 include(tests/tests.cmake)
