@@ -14,6 +14,7 @@ TEST(SSched, Basic) {
 #if 1
   for (uint i = 0; i < 12; ++i)
     ssched.spawn([&counter,i](R2_ASYNC) {
+
       counter += 1;
       if (i == 11)
         R2_STOP();

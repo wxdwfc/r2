@@ -59,6 +59,7 @@ TEST(RDMA, sop)
     test_loc[1] = 52;
     ASSERT_NE(test_loc[0], 52);
     auto ret = op.execute(qpp, IBV_SEND_SIGNALED, R2_ASYNC_WAIT);
+    R2_YIELD;
     ASSERT(ret == IOCode::Ok);
     ASSERT_EQ(test_loc[0], 52);
     runned = true;
