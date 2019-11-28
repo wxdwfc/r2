@@ -19,7 +19,7 @@ class UDSession : public Session {
   ibv_send_wr wr;
   ibv_sge sge;
 
-  UDSession(Arc<UD> &ud, const QPAttr &remote_attr)
+  UDSession(const u32 &id, Arc<UD> &ud, const QPAttr &remote_attr)
       : ah(ud->create_ah(remote_attr)), qkey(remote_attr.qkey),
         qpn(remote_attr.qpn), ud(ud.get()) {
     // init setup of wr
@@ -27,6 +27,7 @@ class UDSession : public Session {
     wr.num_sge = 1;
     wr.next = nullptr;
     wr.sg_list = &sge;
+    wr.imm_data = id;
 
     wr.wr.ud.ah = ah;
     wr.wr.ud.remote_qpn = qpn;
@@ -39,11 +40,15 @@ class UDSession : public Session {
   }
 
 public:
-  static ::r2::Option<Arc<UDSession>> create(Arc<UD> &ud, const QPAttr &remote_attr) {
-    auto res = Arc<UDSession>(new UDSession(ud, remote_attr));
+  static ::r2::Option<Arc<UDSession>> create(const u32 &id, Arc<UD> &ud, const QPAttr &remote_attr) {
+    auto res = Arc<UDSession>(new UDSession(id, ud, remote_attr));
     if (res->ah)
       return res;
     return {};
+  }
+
+  u32 my_id() const {
+    return wr.imm_data;
   }
 
   Result<std::string>
