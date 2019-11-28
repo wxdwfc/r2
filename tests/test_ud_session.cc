@@ -70,8 +70,9 @@ TEST(UDS, Create) {
   auto ud_session = UDSession::create(73,ud, ud->my_attr()).value();
   for (uint i = 0; i < 1024; ++i) {
     auto msg = ::rdmaio::Marshal::dump<u64>(i);
-    auto res_s = ud_session->send_blocking(
-        {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+    //auto res_s = ud_session->send_blocking(
+    //{.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+    auto res_s = ud_session->send_unsignaled({.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
     ASSERT(res_s == IOCode::Ok);
   }
 

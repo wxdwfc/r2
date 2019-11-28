@@ -19,9 +19,12 @@ class UDSession : public Session {
   ibv_send_wr wr;
   ibv_sge sge;
 
+  const int send_depth = 0;
+
   UDSession(const u32 &id, Arc<UD> &ud, const QPAttr &remote_attr)
       : ah(ud->create_ah(remote_attr)), qkey(remote_attr.qkey),
-        qpn(remote_attr.qpn), ud(ud.get()) {
+        qpn(remote_attr.qpn), ud(ud.get()),
+        send_depth(ud->my_config.max_send_sz() / 2) {
     // init setup of wr
     wr.opcode = IBV_WR_SEND_WITH_IMM;
     wr.num_sge = 1;
@@ -74,7 +77,35 @@ public:
     setup_sge(msg);
     wr.send_flags =
         IBV_SEND_SIGNALED |
+      ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
+
+    struct ibv_send_wr *bad_sr = nullptr;
+    auto rc = ibv_post_send(ud->qp, &wr, &bad_sr);
+    if (unlikely(rc != 0)) {
+      return ::rdmaio::Err(std::string(strerror(errno)));
+    }
+    return ::rdmaio::Ok(std::string(""));
+  }
+
+  int unsigned_reqs = 0;
+
+  /*!
+    This call should not mix with all the other calls
+   */
+  Result<std::string> send_unsignaled(const MemBlock &msg) {
+    setup_sge(msg);
+    wr.send_flags =
+        (unsigned_reqs == 0 ? IBV_SEND_SIGNALED : 0) |
         ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
+
+    if (unsigned_reqs > send_depth) {
+      auto ret = ud->wait_one_comp(1000000);
+      if (unlikely(ret != IOCode::Ok)) {
+        return ::rdmaio::transfer(ret, UD::wc_status(ret.desc));
+      }
+      unsigned_reqs = 0;
+    } else
+      unsigned_reqs += 1;
 
     struct ibv_send_wr *bad_sr = nullptr;
     auto rc = ibv_post_send(ud->qp, &wr, &bad_sr);
