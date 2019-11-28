@@ -54,16 +54,9 @@ public:
   Result<std::string>
   send_blocking(const MemBlock &msg,
                 const double timeout = no_timeout) override {
-    setup_sge(msg);
-    wr.send_flags =
-        IBV_SEND_SIGNALED |
-        ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
-
-    struct ibv_send_wr *bad_sr = nullptr;
-    auto rc = ibv_post_send(ud->qp, &wr, &bad_sr);
-    if (unlikely(rc != 0)) {
-      return ::rdmaio::Err(std::string(strerror(errno)));
-    }
+    auto ret_s = send_pending(msg);
+    if (unlikely(ret_s != IOCode::Ok))
+      return ret_s;
 
     auto ret = ud->wait_one_comp(timeout);
     if (unlikely(ret != IOCode::Ok)) {
@@ -78,7 +71,17 @@ public:
   }
 
   Result<std::string> send_pending(const MemBlock &msg) override {
-    return ::rdmaio::Err(std::string("not implemented"));
+    setup_sge(msg);
+    wr.send_flags =
+        IBV_SEND_SIGNALED |
+        ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
+
+    struct ibv_send_wr *bad_sr = nullptr;
+    auto rc = ibv_post_send(ud->qp, &wr, &bad_sr);
+    if (unlikely(rc != 0)) {
+      return ::rdmaio::Err(std::string(strerror(errno)));
+    }
+    return ::rdmaio::Ok(std::string(""));
   }
 
   Result<std::string> send_pending(const MemBlock &msg, R2_ASYNC) override {
