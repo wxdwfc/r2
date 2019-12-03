@@ -86,6 +86,10 @@ public:
 
   usize pending_future(const id_t &id) const { return pending_futures.at(id); }
 
+  void addback_coroutine(const usize &id) {
+    routine_chain.add(routines.at(id));
+  }
+
   /**********************************************************************************************/
 
   /*! Note, the following functions must be called **inside** a specific
