@@ -37,9 +37,10 @@ class UDSession : public Session {
     wr.wr.ud.remote_qkey = qkey;
   }
 
-  void setup_sge(const MemBlock &msg) {
+  void setup_sge(const MemBlock &msg,const u32 &lkey = 0) {
     sge.addr = (uintptr_t)(msg.mem_ptr);
     sge.length = msg.sz;
+    sge.lkey = lkey;
   }
 
 public:
@@ -87,25 +88,23 @@ public:
     return ::rdmaio::Ok(std::string(""));
   }
 
-  int unsigned_reqs = 0;
-
   /*!
     This call should not mix with all the other calls
    */
-  Result<std::string> send_unsignaled(const MemBlock &msg) {
-    setup_sge(msg);
+  Result<std::string> send_unsignaled(const MemBlock &msg,const u32 &lkey = 0) {
+    setup_sge(msg,lkey);
     wr.send_flags =
-        (unsigned_reqs == 0 ? IBV_SEND_SIGNALED : 0) |
+        (ud->pending_reqs == 0 ? IBV_SEND_SIGNALED : 0) |
         ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
 
-    if (unsigned_reqs > send_depth) {
+    if (ud->pending_reqs > send_depth) {
       auto ret = ud->wait_one_comp(1000000);
       if (unlikely(ret != IOCode::Ok)) {
         return ::rdmaio::transfer(ret, UD::wc_status(ret.desc));
       }
-      unsigned_reqs = 0;
+      ud->pending_reqs = 0;
     } else
-      unsigned_reqs += 1;
+      ud->pending_reqs += 1;
 
     struct ibv_send_wr *bad_sr = nullptr;
     auto rc = ibv_post_send(ud->qp, &wr, &bad_sr);
