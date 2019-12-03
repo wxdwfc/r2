@@ -19,7 +19,9 @@ struct MemBlock {
   template <typename T> inline T *interpret_as(const u32 &offset = 0) {
     if (unlikely(sz - offset < sizeof(T)))
       return nullptr;
-    return reinterpret_cast<T *>(mem_ptr + offset);
+    { // unsafe
+      return reinterpret_cast<T *>((char *)mem_ptr + offset);
+    }
   }
 };
 

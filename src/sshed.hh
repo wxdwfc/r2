@@ -68,6 +68,8 @@ public:
    */
   Option<id_t> spawn(const sroutine_func_t &f);
 
+  void emplace_future(poll_func_t &f) { futures.push_back(f); }
+
   /*!
     Empace a future for waiting coroutine (id)
     This means that the coroutine (id) should wait at least (num) requests.
