@@ -120,7 +120,8 @@ public:
     \note: this function is dangerous: because we donot make sanity
     checks to the doorbell arguments
    */
-  Result<std::string> send_unsignaled_doorbell(DoorbellHelper<> &doorbell,
+  template <usize N>
+  Result<std::string> send_unsignaled_doorbell(DoorbellHelper<N> &doorbell,
                                                const MemBlock &msg,
                                                const u32 &lkey,
                                                const ibv_send_wr &target_wr) {
@@ -153,7 +154,8 @@ public:
     \note: this function is dangerous: because we dnonot make sanity
     checks to the doorbell arguments
    */
-  Result<std::string> flush_a_doorbell(DoorbellHelper<> &doorbell) {
+  template <usize N>
+  Result<std::string> flush_a_doorbell(DoorbellHelper<N> &doorbell) {
     auto ret = ::rdmaio::Ok(std::string(""));
     if (doorbell.empty())
       return ret;

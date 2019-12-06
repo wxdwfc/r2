@@ -34,7 +34,7 @@ Option<id_t> SScheduler::spawn(const sroutine_func_t &f) {
   *wrapper = std::bind(f, std::placeholders::_1, std::ref(*this));
 
   { // unsafe code
-    routines.push_back(new Node<Routine>(cid,wrapper));
+    routines.push_back(new Node<Routine>(cid, wrapper));
     Node<Routine> *cur_ptr = routines[cid];
 
     auto cur = routine_chain.add(cur_ptr);
@@ -50,7 +50,7 @@ void SScheduler::exit(yield_f &f) {
 
   // free resource
   // FIXME: currently delete this cause segmentation fault, I dnonot know why
-  //delete temp;
+  // delete temp;
 
   // there are still remaining coroutines
   if (cur_routine_ptr != temp) {
@@ -70,7 +70,8 @@ void SScheduler::poll_all_futures() {
 
     // if res == Ok, NearOk, we need to decrease the pending futures
     if (res == IOCode::Ok || res == IOCode::NearOk) {
-      ASSERT(pending_futures[cid] >= num);
+      ASSERT(pending_futures[cid] >= num)
+          << " reduce num: " << num << " for cid: " << cid;
       pending_futures.at(cid) -= num;
       if (pending_futures[cid] == 0)
         need_add = true;
