@@ -5,9 +5,10 @@
 namespace r2 {
 
 template <typename T> struct Node {
+  T val;
+
   Node *prev_p = nullptr;
   Node *next_p = nullptr;
-  T val;
 
   explicit Node(const T &val) : val(val) {}
 
@@ -40,6 +41,9 @@ public:
     if (unlikely(null())) {
       tailer_p = (header_p = n);
       prev = n;
+    } else {
+      assert(tailer_p != nullptr);
+      assert(tailer_p->next_p == header_p);
     }
     tailer_p->set_next(n);
     tailer_p = n;
@@ -58,7 +62,7 @@ public:
   inline Node<T> *leave_one(Node<T> *n) {
     auto next = n->next_p;
     n->prev_p->set_next(next);
-    next->set_prev(n->prev_p);
+    n->next_p->set_prev(n->prev_p);
 
     if (tailer_p == n) {
       tailer_p = n->prev_p;

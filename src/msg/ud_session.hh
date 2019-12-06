@@ -125,6 +125,9 @@ public:
                                                const MemBlock &msg,
                                                const u32 &lkey,
                                                const ibv_send_wr &target_wr) {
+    // get a doorbell entry
+    assert(doorbell.next());
+
     doorbell.cur_sge() = setup_sge(msg, lkey);
 
     doorbell.cur_wr().wr.ud = target_wr.wr.ud;
@@ -141,8 +144,6 @@ public:
       ud->pending_reqs = 0;
     } else
       ud->pending_reqs += 1;
-
-    doorbell.next();
 
     if (doorbell.full()) {
       return flush_a_doorbell(doorbell);

@@ -142,24 +142,27 @@ public:
     ibv_wc wc;
 
     // 1. we setup the last entry of the doorbelled request
-    doorbell.freeze();
-    auto &wr = doorbell.cur_wr();
+    auto &wr = doorbell.last_wr();
     wr.send_flags |= IBV_SEND_SIGNALED;
 
-    wr.wr_id = qp_ptr->encode_my_wr(R2_COR_ID(),doorbell.size());
+    wr.wr_id = qp_ptr->encode_my_wr(R2_COR_ID(), doorbell.size());
+
+    doorbell.freeze();
+    assert(doorbell.size() == 1);
 
     // 2. send the doorbell
     struct ibv_send_wr *bad_sr = nullptr;
-
     auto rc = ibv_post_send(qp_ptr->qp, doorbell.first_wr_ptr(), &bad_sr);
     if (unlikely(rc != 0)) {
       return ::rdmaio::Err(wc);
     }
+    qp_ptr->out_signaled += 1;
+
     doorbell.freeze_done();
     doorbell.clear();
 
     // 3. wait this doorbell to complete
-    return wait_one(qp,R2_ASYNC_WAIT);
+    return wait_one(qp, R2_ASYNC_WAIT);
   }
 
 private:
@@ -182,11 +185,8 @@ private:
         id_t polled_cid = static_cast<id_t>(std::get<0>(wr_wc.value()));
         wc = std::get<1>(wr_wc.value());
 
-        if (wc.status == IBV_WC_SUCCESS && qp_ptr->ongoing_signaled() == 0)
+        if (wc.status == IBV_WC_SUCCESS)
           return ::rdmaio::Ok(std::make_pair(polled_cid, 1u));
-        else if (wc.status == IBV_WC_SUCCESS)
-          // Ok, but the future must still in the queue
-          return NearOk(std::make_pair(polled_cid, 1u));
         else
           return ::rdmaio::Err(std::make_pair(id, 1u));
       }
@@ -195,15 +195,10 @@ private:
     };
 
     // end spawning future
-    if (qp_ptr->ongoing_signaled() == 1) {
-      // 1 means that I am the only one to wait for this QP
-      auto ret = R2_PAUSE_WAIT(poll_future, 1);
-      return ::rdmaio::transfer(ret, wc);
-    }
-    auto ret = R2_WAIT_NUM(1);
+    auto ret = R2_PAUSE_WAIT(poll_future, 1);
     return ::rdmaio::transfer(ret, wc);
   }
-};
+}; // namespace rdma
 } // namespace rdma
 
 } // namespace r2

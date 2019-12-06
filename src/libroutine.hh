@@ -37,9 +37,9 @@ namespace r2
 
 #define R2_YIELD _r.yield_to_next(yield);
 
-#define R2_PAUSE_AND_YIELD _r.pause(yield);
+#define R2_PAUSE_AND_YIELD _r.pause_and_yield(yield);
 
-#define R2_PAUSE _r.pause_and_yield(yield);
+#define R2_PAUSE _r.pause(yield);
 
 #define R2_COR_ID() _r.cur_id()
 

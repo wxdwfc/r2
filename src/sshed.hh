@@ -100,6 +100,7 @@ public:
     Pause the current coroutine, and yield to others
    */
   Result<> pause_and_yield(yield_f &f) {
+    cur_routine_ptr->val.active = false;
     cur_routine_ptr = routine_chain.leave_one(cur_routine_ptr);
     cur_routine_ptr->val.execute(f);
     return cur_routine_ptr->val.status;
@@ -114,6 +115,8 @@ public:
   void yield_to_next(yield_f &f) {
     auto temp = cur_routine_ptr;
     cur_routine_ptr = cur_routine_ptr->next_p;
+    //LOG(2) << "yield to next coroutine: "  << cur_routine_ptr;
+    //LOG(2) << "with id: " << (int)(cur_routine_ptr->val.id);
 
     if (likely(temp != cur_routine_ptr))
       cur_routine_ptr->val.execute(f);

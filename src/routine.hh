@@ -26,22 +26,33 @@ using routine_func_t = std::function<void(yield_f &)>;
 class Routine {
   using id_t = u8;
 
-  std::shared_ptr<routine_func_t> raw_f;
-  b_coroutine_f core;
-
 public:
-  Result<> status;
   const id_t id;
 
+  std::shared_ptr<routine_func_t> raw_f;
+
+  b_coroutine_f *core;
+
+  Result<> status;
+
+  bool active = false;
+
   Routine(const id_t &id, std::shared_ptr<routine_func_t> f)
-    : id(id), raw_f(f), core(*f), status(::rdmaio::Ok()) {}
-
-  ~Routine() = default;
-
-  inline void execute(yield_f &yield) {
-    yield(core);
+    : id(id), raw_f(f), core(new b_coroutine_f(*f)), status(::rdmaio::Ok()) {
+    //
   }
 
-  void start() { core(); }
+  ~Routine() {
+    // maybe we should not delete this core
+    // because other coroutines may have reference to it
+    //delete core;
+  }
+
+  inline void execute(yield_f &yield) {
+    active = true;
+    yield(*core);
+  }
+
+  void start() { (*core)(); }
 };
 } // namespace r2

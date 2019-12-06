@@ -12,7 +12,7 @@ static_assert(
  */
 SScheduler::SScheduler() : pending_futures(kMaxRoutineSupported, 0) {
 
-  routines.reserve(kMaxRoutineSupported);
+  routines.reserve(kMaxRoutineSupported + 1);
 
   this->spawn([this](R2_ASYNC) {
     while (R2_EXECUTOR.running) {
@@ -50,7 +50,7 @@ void SScheduler::exit(yield_f &f) {
 
   // free resource
   // FIXME: currently delete this cause segmentation fault, I dnonot know why
-  // delete temp;
+  delete temp;
 
   // there are still remaining coroutines
   if (cur_routine_ptr != temp) {
@@ -73,8 +73,9 @@ void SScheduler::poll_all_futures() {
       ASSERT(pending_futures[cid] >= num)
           << " reduce num: " << num << " for cid: " << cid;
       pending_futures.at(cid) -= num;
-      if (pending_futures[cid] == 0)
+      if (pending_futures[cid] == 0) {
         need_add = true;
+      }
     }
 
     if (res == IOCode::Err)
@@ -87,8 +88,11 @@ void SScheduler::poll_all_futures() {
       it++;
 
     // finally we check whether we need to add back coroutine
-    if (need_add)
-      routine_chain.add(routines.at(cid));
+    if (need_add) {
+      assert(routines.at(cid)->val.active == false);
+      if (cid != 2)
+        routine_chain.add(routines.at(cid));
+    }
   }
 }
 
