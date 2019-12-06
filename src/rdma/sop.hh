@@ -78,7 +78,7 @@ public:
     return *this;
   }
 
-  inline auto execute_my(const Arc<RC> &qp, const int &flags,int wr_id = 0)
+  inline auto execute_my(const Arc<RC> &qp, const int &flags, int wr_id = 0)
       -> Result<std::string> {
 
     // to avoid performance overhead of Arc, we first extract QP's raw pointer
@@ -117,7 +117,7 @@ public:
   inline auto execute(const Arc<RC> &qp, int flags, R2_ASYNC)
       -> Result<ibv_wc> {
     ibv_wc wc;
-    auto ret_s = execute_my(qp, flags,R2_COR_ID());
+    auto ret_s = execute_my(qp, flags, R2_COR_ID());
     if (unlikely(ret_s != IOCode::Ok))
       return ::rdmaio::transfer(ret_s, wc);
 
@@ -125,6 +125,41 @@ public:
       return wait_one(qp, R2_ASYNC_WAIT);
     }
     return ::rdmaio::Ok(wc);
+  }
+
+  /*!
+    We assume a doorbell request must be execute in a sync manner,
+    which means that we will signal the last request
+   */
+  template <usize N>
+  inline auto execute_doorbell(const Arc<RC> &qp, DoorbellHelper<N> &doorbell,
+                               R2_ASYNC) -> Result<ibv_wc> {
+    RC *qp_ptr = ({ // unsafe code
+      RC *temp = qp.get();
+      temp;
+    });
+
+    ibv_wc wc;
+
+    // 1. we setup the last entry of the doorbelled request
+    doorbell.freeze();
+    auto &wr = doorbell.cur_wr();
+    wr.send_flags |= IBV_SEND_SIGNALED;
+
+    wr.wr_id = qp_ptr->encode_my_wr(R2_COR_ID(),doorbell.size());
+
+    // 2. send the doorbell
+    struct ibv_send_wr *bad_sr = nullptr;
+
+    auto rc = ibv_post_send(qp_ptr->qp, doorbell.first_wr_ptr(), &bad_sr);
+    if (unlikely(rc != 0)) {
+      return ::rdmaio::Err(wc);
+    }
+    doorbell.freeze_done();
+    doorbell.clear();
+
+    // 3. wait this doorbell to complete
+    return wait_one(qp,R2_ASYNC_WAIT);
   }
 
 private:
