@@ -148,6 +148,7 @@ public:
     if (doorbell.full()) {
       return flush_a_doorbell(doorbell);
     }
+    //LOG(4) << "next: " << doorbell.size();
     return ::rdmaio::Ok(std::string(""));
   }
 
@@ -160,6 +161,7 @@ public:
     auto ret = ::rdmaio::Ok(std::string(""));
     if (doorbell.empty())
       return ret;
+    //LOG(4) << "flush";
 
     doorbell.freeze();
     struct ibv_send_wr *bad_sr = nullptr;

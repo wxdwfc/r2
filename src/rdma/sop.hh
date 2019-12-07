@@ -35,7 +35,7 @@ struct SROp {
   u32 size = 0;
   int flags = 0;
 
-  u64 imm_data = 0;
+  int imm_data = 0;
 
   double timeout_usec = 1000000;
 
@@ -142,7 +142,7 @@ public:
     ibv_wc wc;
 
     // 1. we setup the last entry of the doorbelled request
-    auto &wr = doorbell.last_wr();
+    auto &wr = doorbell.cur_wr();
     wr.send_flags |= IBV_SEND_SIGNALED;
 
     wr.wr_id = qp_ptr->encode_my_wr(R2_COR_ID(), doorbell.size());
