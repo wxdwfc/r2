@@ -115,8 +115,6 @@ public:
   void yield_to_next(yield_f &f) {
     auto temp = cur_routine_ptr;
     cur_routine_ptr = cur_routine_ptr->next_p;
-    //LOG(2) << "yield to next coroutine: "  << cur_routine_ptr;
-    //LOG(2) << "with id: " << (int)(cur_routine_ptr->val.id);
 
     if (likely(temp != cur_routine_ptr))
       cur_routine_ptr->val.execute(f);
