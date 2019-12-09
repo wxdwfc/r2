@@ -78,8 +78,10 @@ void SScheduler::poll_all_futures() {
       }
     }
 
-    if (res == IOCode::Err)
+    if (res == IOCode::Err) {
       need_add = true;
+      routines.at(cid)->val.status = ::rdmaio::Err();
+    }
 
     // if res == Ok, or Err, we need to eject this future
     if (res == IOCode::Ok || res == IOCode::Err)

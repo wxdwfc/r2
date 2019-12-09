@@ -186,8 +186,9 @@ private:
 
         if (wc.status == IBV_WC_SUCCESS)
           return ::rdmaio::Ok(std::make_pair(polled_cid, 1u));
-        else
+        else {
           return ::rdmaio::Err(std::make_pair(id, 1u));
+        }
       }
       // we still need to poll this future
       return NotReady(std::make_pair(0u, 0u));
