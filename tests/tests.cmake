@@ -1,5 +1,5 @@
 ## main test files
-file(GLOB TSOURCES  "tests/test_srop.cc"  "tests/test_ud_session.cc")
+file(GLOB TSOURCES  "tests/test_srop.cc"  "tests/test_ud_session.cc" "tests/test_rc_session.cc")
 add_executable(coretest ${TSOURCES} )
 
 find_library(boost_serialization_lib NAMES boost_serialization PATHS ./deps/boost PATH_SUFFIXES lib
