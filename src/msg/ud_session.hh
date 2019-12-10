@@ -125,16 +125,6 @@ public:
                                                const MemBlock &msg,
                                                const u32 &lkey,
                                                const ibv_send_wr &target_wr) {
-    // get a doorbell entry
-    assert(doorbell.next());
-
-    doorbell.cur_sge() = setup_sge(msg, lkey);
-
-    doorbell.cur_wr().wr.ud = target_wr.wr.ud;
-    doorbell.cur_wr().imm_data = my_id();
-    doorbell.cur_wr().send_flags =
-        (ud->pending_reqs == 0 ? IBV_SEND_SIGNALED : 0) |
-        ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
 
     if (ud->pending_reqs > send_depth) {
       auto ret = ud->wait_one_comp(1000000);
@@ -144,6 +134,17 @@ public:
       ud->pending_reqs = 0;
     } else
       ud->pending_reqs += 1;
+
+    // get a doorbell entry
+    doorbell.next();
+
+    doorbell.cur_sge() = setup_sge(msg, lkey);
+
+    doorbell.cur_wr().wr.ud = target_wr.wr.ud;
+    doorbell.cur_wr().imm_data = my_id();
+    doorbell.cur_wr().send_flags =
+        (ud->pending_reqs == 0 ? IBV_SEND_SIGNALED : 0) |
+        ((msg.sz <= ::rdmaio::qp::kMaxInlinSz) ? IBV_SEND_INLINE : 0);
 
     if (doorbell.full()) {
       return flush_a_doorbell(doorbell);
@@ -162,8 +163,8 @@ public:
       return ret;
 
     doorbell.freeze();
-    struct ibv_send_wr *bad_sr = nullptr;
 
+    struct ibv_send_wr *bad_sr = nullptr;
     auto rc = ibv_post_send(ud->qp, doorbell.first_wr_ptr(), &bad_sr);
     if (unlikely(rc != 0)) {
       ret = ::rdmaio::Err(std::string(strerror(errno)));

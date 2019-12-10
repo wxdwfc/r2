@@ -92,7 +92,7 @@ public:
         {.op = this->op, .flags = flags, .len = this->size, .wr_id = wr_id},
         {.local_addr = static_cast<rmem::RMem::raw_ptr_t>(this->local_ptr),
          .remote_addr = this->remote_addr,
-         .imm_data = this->imm_data});
+         .imm_data = static_cast<u64>(this->imm_data)});
     if (unlikely(res != ::rdmaio::IOCode::Ok))
       return res;
     return ::rdmaio::Ok(std::string(""));
@@ -148,7 +148,6 @@ public:
     wr.wr_id = qp_ptr->encode_my_wr(R2_COR_ID(), doorbell.size());
 
     doorbell.freeze();
-    assert(doorbell.size() == 1);
 
     // 2. send the doorbell
     struct ibv_send_wr *bad_sr = nullptr;
@@ -177,12 +176,13 @@ private:
     ibv_wc wc;
     auto id = R2_COR_ID();
 
-    poll_func_t poll_future = [qp_ptr, &wc,
+    poll_func_t poll_future = [qp_ptr,
                                id]() -> Result<std::pair<id_t, usize>> {
       auto wr_wc = qp_ptr->poll_rc_comp();
       if (wr_wc) {
         id_t polled_cid = static_cast<id_t>(std::get<0>(wr_wc.value()));
-        wc = std::get<1>(wr_wc.value());
+        //wc = std::get<1>(wr_wc.value());
+        auto wc = std::get<1>(wr_wc.value());
 
         if (wc.status == IBV_WC_SUCCESS)
           return ::rdmaio::Ok(std::make_pair(polled_cid, 1u));
