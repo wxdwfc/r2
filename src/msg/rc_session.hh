@@ -77,13 +77,17 @@ template <usize R> class RCRecvSession {
 
   usize idle_recv_entries = 0;
   const usize poll_recv_step = 1;
+
 public:
-  RCRecvSession(Arc<RC> qp, Arc<RecvEntries<R>> e) : qp(qp), recv_entries(e) {}
+  RCSession end_point;
+
+  RCRecvSession(Arc<RC> qp, Arc<RecvEntries<R>> e)
+      : qp(qp), recv_entries(e), end_point(0, qp) {}
 
   void consume_one() {
     idle_recv_entries += 1;
     if (idle_recv_entries >= poll_recv_step) {
-      qp->post_recvs(*recv_entries,idle_recv_entries);
+      qp->post_recvs(*recv_entries, idle_recv_entries);
       idle_recv_entries = 0;
     }
   }
