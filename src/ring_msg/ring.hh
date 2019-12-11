@@ -6,7 +6,22 @@ namespace r2 {
 
 namespace ring_msg {
 
-struct Ring {
+/*!
+  Remote ring store remote ring buffer information
+ */
+struct RemoteRing {
+  usize tailer = 0;
+  usize base_addr = 0;
+  u32 mem_key = 0;
+
+  explicit RemoteRing(const usize &base_addr, const u32 &key)
+      : base_addr(base_addr), mem_key(key) {}
+};
+
+/*!
+  Local ring store local ring information
+ */
+struct LocalRing {
   MemBlock local_mem;
   usize tailer = 0;
   usize header = 0;
