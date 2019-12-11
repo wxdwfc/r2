@@ -11,13 +11,13 @@ using namespace rdmaio;
 using namespace rdmaio::qp;
 
 class RCSession : public Session {
+public:
 
   RC *qp = nullptr;
   const usize send_depth; // configured per QP
 
   usize pending_sends = 0;
 
-public:
   const int id;
 
   RCSession(const int &id, Arc<RC> &rc)
@@ -76,13 +76,13 @@ template <usize R> class RCRecvSession {
   Arc<RC> qp;
 
   usize idle_recv_entries = 0;
-  const usize poll_recv_step = 1;
+  const usize poll_recv_step = R / 2;
 
 public:
   RCSession end_point;
 
   RCRecvSession(Arc<RC> qp, Arc<RecvEntries<R>> e)
-      : qp(qp), recv_entries(e), end_point(0, qp) {}
+      : qp(qp), recv_entries(e), end_point(123, qp) {}
 
   void consume_one() {
     idle_recv_entries += 1;
