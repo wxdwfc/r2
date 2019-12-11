@@ -15,6 +15,6 @@ target_link_libraries(coretest gtest gtest_main ${rocksdb_lib} ${mkl_rt_lib} ${b
 add_dependencies(coretest jemalloc )
 
 ## test file when there is no RDMA, allow local debug
-file(GLOB T_WO_SOURCES  "tests/test_list.cc" "tests/test_rdtsc.cc" "tests/test_ssched.cc")
+file(GLOB T_WO_SOURCES  "tests/test_list.cc" "tests/test_rdtsc.cc" "tests/test_ssched.cc" "tests/test_rm.cc")
 add_executable(coretest_wo_rdma ${T_WO_SOURCES} "src/logging.cc")
 target_link_libraries(coretest_wo_rdma gtest gtest_main boost_context boost_system boost_coroutine boost_thread boost_chrono r2)
