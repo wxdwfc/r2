@@ -36,7 +36,7 @@ public:
 
   Result<std::string> send_unsignaled(const MemBlock &msg) {
 
-    int write_flag = msg.sz < ::rdmaio::qp::kMaxInlinSz ? IBV_SEND_INLINE : 0;
+    int write_flag = msg.sz <= ::rdmaio::qp::kMaxInlinSz ? IBV_SEND_INLINE : 0;
     auto res_s = qp->send_normal(
         {.op = IBV_WR_SEND_WITH_IMM,
          .flags = write_flag | ((pending_sends == 0) ? (IBV_SEND_SIGNALED) : 0),

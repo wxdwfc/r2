@@ -1,21 +1,33 @@
 #pragma once
 
+#include "rlib/core/rmem/handler.hh"
+
 #include "../mem_block.hh"
 
 namespace r2 {
 
 namespace ring_msg {
 
+using namespace rdmaio::rmem;
+
 /*!
   Remote ring store remote ring buffer information
  */
-struct RemoteRing {
+template <usize kRingSz> struct RemoteRing {
   usize tailer = 0;
   usize base_addr = 0;
   u32 mem_key = 0;
 
   explicit RemoteRing(const usize &base_addr, const u32 &key)
       : base_addr(base_addr), mem_key(key) {}
+
+  RemoteRing() = default;
+
+  usize next_addr(const usize &sz) {
+    auto ret = tailer;
+    tailer = (tailer + sz) % kRingSz;
+    return ret + base_addr;
+  }
 };
 
 /*!
@@ -26,17 +38,25 @@ struct LocalRing {
   usize tailer = 0;
   usize header = 0;
 
-  explicit Ring(const MemBlock &mem) : local_mem(mem) {}
+  explicit LocalRing(const MemBlock &mem) : local_mem(mem) {}
 
-  Ring() : Ring(MemBlock(nullptr, 0)) {}
-  ~Ring() = default;
+  LocalRing() : LocalRing(MemBlock(nullptr, 0)) {}
+  ~LocalRing() = default;
 
   inline Option<MemBlock> cur_msg(const usize &sz) {
     if (unlikely(sz + tailer > local_mem.sz)) {
       return {};
     }
     auto temp = increment_tailer(sz);
-    return {.mem_ptr = (char *)(local_mem.mem_ptr + temp), .sz = sz};
+    return MemBlock((char *)(local_mem.mem_ptr) + temp, sz);
+  }
+
+  u64 convert_to_rdma_addr(const RegAttr &attr) const {
+    // invariant checks
+    ASSERT((u64)attr.buf <= (u64)local_mem.mem_ptr);
+    ASSERT((u64)local_mem.mem_ptr + local_mem.sz <=
+           (u64)attr.buf + (u64)attr.sz);
+    return (u64)local_mem.mem_ptr - (u64)attr.buf;
   }
 
 private:

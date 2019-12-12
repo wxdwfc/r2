@@ -5,20 +5,29 @@
 
 #include "../mem_block.hh"
 
+#include "./session.hh"
+
 namespace r2 {
 
 namespace ring_msg {
 
-// TODO
+using namespace rdmaio;
+using namespace rdmaio::qp;
+
 template <usize R> class RecvBundler {
   // structure for post_recvs
-  Arc<RecvEntries<R>> recv_entries;
   usize idle_recv_entries = 0;
 
-  // ring buffer for storing the message
+public:
+  Arc<RecvEntries<R>> recv_entries;
 
+  explicit RecvBundler(Arc<AbsRecvAllocator> &alloc_p)
+      : recv_entries(RecvEntriesFactoryv2<R>::create(alloc_p, 0)) {}
 
   Result<int> consume_one(Arc<RC> &qp) {
+
+    const usize poll_recv_step = R / 2;
+    static_assert(poll_recv_step > 0, "");
 
     idle_recv_entries += 1;
     if (idle_recv_entries >= poll_recv_step) {
@@ -29,5 +38,6 @@ template <usize R> class RecvBundler {
     return ::rdmaio::Ok(0);
   }
 };
-}
+
+} // namespace ring_msg
 } // namespace r2

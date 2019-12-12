@@ -40,6 +40,11 @@ public:
     total_mem -= sz;
     return std::make_pair(ret, key);
   }
+  ::r2::Option<std::pair<rmem::RMem::raw_ptr_t, rmem::RegAttr>>
+  alloc_one_for_remote(const usize &sz) {
+    RDMA_ASSERT(false) << "not implemented";
+    return {};
+  }
 };
 
 TEST(RCS, Basic) {

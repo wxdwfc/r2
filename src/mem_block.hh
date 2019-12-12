@@ -12,7 +12,9 @@ namespace r2 {
 
 struct MemBlock {
   void *mem_ptr = nullptr;
-  const u32 sz = 0;
+  u32 sz = 0;
+
+  MemBlock() = default;
 
   MemBlock(void *data_p, const u32 &sz) : mem_ptr(data_p), sz(sz) {}
 
