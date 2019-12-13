@@ -1,7 +1,7 @@
 #pragma once
 
+#include "./receiver.hh"
 #include "./session.hh"
-#include "./manager.hh"
 
 namespace r2 {
 
@@ -23,7 +23,8 @@ namespace ring_msg {
   auto recv_cq = ...;
   Arc<AbsRecvAllocator> alloc = ...;
 
-  Arc<Receiver<128>> ring_receiver = rm.create("my_ring_receiver", recv_cq,alloc).value();
+  Arc<Receiver<128>> ring_receiver = rm.create("my_ring_receiver",
+  recv_cq,alloc).value();
 
   // after server receive the first message, using the recv_cq
   `
@@ -41,8 +42,88 @@ namespace ring_msg {
   `
  */
 
-//template <usize max_recv_sz> class RingRecvIter {};
+template <usize R, usize kRingSz, usize kMaxMsg> class RecvFactory {
+public:
+  static Option<Arc<::r2::ring_msg::Receiver<R, kRingSz, kMaxMsg>>>
+  create(RingManager<R> &manager, const std::string &name, ibv_cq *cq,
+         Arc<AbsRecvAllocator> alloc) {
+    // first we try to reg (cq, alloc) to factory
+    if (manager.reg_comm.create_then_reg(name, cq, alloc)) {
+      // then we create the receiver
+      return std::make_shared<::r2::ring_msg::Receiver<R, kRingSz, kMaxMsg>>(
+          name, cq, &manager);
+    }
+    return {};
+  }
+};
 
+template <usize R, usize kRingSz, usize kMaxMsg> class RingRecvIter {
+  Receiver<R, kRingSz, kMaxMsg> *receiver;
+
+  int idx = 0;
+  const int total_msgs = -1;
+
+  Session<R, kRingSz, kMaxMsg> *s_ptr = nullptr;
+
+  usize msg_sz = 0;
+
+public:
+  RingRecvIter(Arc<Receiver<R, kRingSz, kMaxMsg>> &r)
+      : receiver(r.get()),
+        total_msgs(ibv_poll_cq(receiver->recv_cq, receiver->num_wcs(),
+                               receiver->get_wcs_ptr())) {
+    fill_cur_msg();
+  }
+
+  ~RingRecvIter() {
+    //LOG(0) << "end";
+  }
+
+  inline void next() {
+    // 2. then we update to the next message
+    s_ptr->update_recv_meta();
+    idx += 1;
+
+    fill_cur_msg();
+  }
+
+  inline bool has_msgs() const { return idx < total_msgs; }
+
+  inline MemBlock cur_msg() { return cur_session()->cur_msg(msg_sz).value(); }
+
+  /*!
+    Current session correspond to this message
+   */
+  inline Session<R, kRingSz, kMaxMsg> *cur_session() { return s_ptr; }
+
+private:
+  void fill_cur_msg() {
+    if (!has_msgs())
+      return;
+    do {
+      ASSERT(receiver->wcs[idx].status == IBV_WC_SUCCESS);
+      auto val = receiver->wcs[idx].imm_data;
+      auto decoded = IDDecoder::decode(val);
+
+      auto session_id = std::get<0>(decoded);
+
+      auto s = receiver->query_session(session_id, std::get<1>(decoded));
+
+      if (unlikely(!s)) {
+        // this is a session connect message, ignore
+        // re-post the recv, into next message
+        s_ptr = receiver->query_session(session_id, std::get<1>(decoded)).value();
+        next();
+      } else {
+        // the message is filled
+        s_ptr = s.value();
+        msg_sz = std::get<1>(decoded);
+        break;
+      }
+
+    } while (has_msgs());
+  }
+};
 
 } // namespace ring_msg
 } // namespace r2

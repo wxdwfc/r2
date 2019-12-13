@@ -5,8 +5,7 @@
 #include "rlib/core/utils/marshal.hh"
 
 #include "../mem_block.hh"
-
-#include "./receiver.hh"
+#include "./proto.hh"
 
 namespace r2 {
 
@@ -43,6 +42,7 @@ template <usize single_recv_entry> class RingManager {
 public:
   Factory<std::string, RingRecvCommon> reg_comm;
   Factory<std::string, RecvEntries<single_recv_entry>> reg_recv_entries;
+  Factory<std::string, MemBlock> reg_rings;
 
   /*!
     we assume RCtrl is a global static variable which never freed.
@@ -57,25 +57,19 @@ public:
 
   ~RingManager() = default;
 
-  template <usize R, usize kRingSz, usize kMaxMsg>
-  Option<Arc<::r2::ring_msg::Receiver<R, kRingSz, kMaxMsg>>>
-  create_receiver(const std::string &name, ibv_cq *cq,
-                  Arc<AbsRecvAllocator> alloc) {
-    // first we try to reg (cq, alloc) to factory
-    if (reg_comm.create_then_reg(name, cq, alloc)) {
-      // then we create the receiver
-      return std::make_shared<::r2::ring_msg::Receiver<R, kRingSz, kMaxMsg>>(
-          name, cq);
+  Option<MemBlock> query_ring(const std::string &name) {
+    auto res = reg_rings.query(name);
+    if (res) {
+      return *(res.value());
     }
     return {};
   }
 
-  Option<MemBlock> query_ring(const std::string &name) {
-    auto res = reg_comm.query(name);
-    if (res) {
-      return res.value()->ring_area;
-    }
-    return {};
+  Option<Arc<RC>> query_ring_qp(const std::string &name){
+    auto res = rctrl_p->registered_qps.query(name);
+    if (!res)
+      return {};
+    return std::dynamic_pointer_cast<RC>(res.value());
   }
 
   /*!
@@ -154,8 +148,11 @@ public:
         goto WA;
       } else {
         // fill in the registered area
-        recv_c_res.value()->ring_area =
-            MemBlock(std::get<0>(ring.value()), rc_req.max_recv_sz);
+        auto mem = Arc<MemBlock>(
+            new MemBlock(std::get<0>(ring.value()), rc_req.max_recv_sz));
+        ASSERT(reg_rings.reg(rc_req.name, mem));
+
+        rc->bind_local_mr(std::get<1>(ring.value())); // we set a default local MR for the created QP
       }
 
       // 3. fetch the QP result

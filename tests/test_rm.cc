@@ -13,7 +13,7 @@ using namespace r2::ring_msg;
 
 TEST(Ring, Basic) {
   MemBlock test(nullptr, 1024);
-  LocalRing ring(test);
+  LocalRing<1024> ring(test);
 
   ASSERT_TRUE(ring.cur_msg(64));
   ASSERT_FALSE(ring.cur_msg(1024));
@@ -82,8 +82,11 @@ TEST(RM, Connect) {
       Arc<AAllocator>(new AAllocator(mem, handler->get_reg_attr().value()));
 
   // 3. create a receiver for receving all messages
+  // auto receiver =
+  // rm.create_receiver<128, 1024, 64>("test_channel", recv_cq, alloc).value();
   auto receiver =
-      rm.create_receiver<128, 1024, 64>("test_channel", recv_cq, alloc).value();
+      RecvFactory<128, 1024, 64>::create(rm, "test_channel", recv_cq, alloc)
+          .value();
   ASSERT_TRUE(receiver);
 
   ctrl.start_daemon();
@@ -94,8 +97,11 @@ TEST(RM, Connect) {
   auto recv_cq1 = std::get<0>(recv_cq_res1.desc);
 
   // used to receive sender's reply
+  // auto receiver_s =
+  // rm.create_receiver<128, 1024, 64>("reply_channel", recv_cq1, alloc)
+  //.value();
   auto receiver_s =
-      rm.create_receiver<128, 1024, 64>("reply_channel", recv_cq1, alloc).value();
+      std::make_shared<Receiver<128, 1024, 64>>("reply_channel", recv_cq1);
   ASSERT_TRUE(receiver_s);
 
   // 4. Try connect the session
@@ -113,52 +119,238 @@ TEST(RM, Connect) {
   // try send something
   auto msg = ::rdmaio::Marshal::dump<u64>(0xdeadbeaf);
   auto res_s =
-      ss->send_unsignaled({.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ss->send_blocking({.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
   ASSERT(res_s == IOCode::Ok);
 
   sleep(1);
 
-  LocalRing local_ring(rm.query_ring("test_channel").value());
+  LocalRing<1024> local_ring(rm.query_ring(std::to_string(73)).value());
 
-  // try recv
-  for (RecvIter<RC, recv_depth> iter(recv_cq, receiver->get_wcs_ptr()); iter.has_msgs();
-       iter.next()) {
-    auto imm_msg = iter.cur_msg().value();
-    auto imm = std::get<0>(imm_msg);
+  // now we use the more advanced iterator for test
+  using RI = RingRecvIter<128, 1024, 64>;
+  for (RI iter(receiver); iter.has_msgs(); iter.next()) {
+    auto cur_msg = iter.cur_msg();
+    ASSERT_EQ(cur_msg.sz, sizeof(u64));
 
-    auto decoded = IDDecoder::decode(imm);
-    ASSERT_EQ(std::get<0>(decoded), 73);
-    ASSERT_EQ(std::get<1>(decoded), sizeof(u64));
-
-    auto cur_msg = local_ring.cur_msg(std::get<1>(decoded)).value();
     u64 *value_ptr = cur_msg.interpret_as<u64>(0);
-    ASSERT_EQ(*value_ptr,0xdeadbeaf);
+    ASSERT_EQ(*value_ptr, 0xdeadbeaf);
+    // ASSERT_EQ(*value_ptr, 0);
   }
 
+  LOG(4) << "one round simple test done";
+
   // test of send more messages
-  for(uint i = 0; i< 32;++i) {
+  for (uint i = 0; i < 64; ++i) {
     auto msg = ::rdmaio::Marshal::dump<u64>(i);
     auto res_s = ss->send_unsignaled(
         {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
     ASSERT(res_s == IOCode::Ok);
   }
   sleep(1);
+
+  LOG(4) << "Recv round 2";
   usize recv_count = 0;
 
   // try recv
-  for (RecvIter<RC, recv_depth> iter(recv_cq, receiver->get_wcs_ptr());
-       iter.has_msgs(); iter.next()) {
-    auto imm_msg = iter.cur_msg().value();
-    auto imm = std::get<0>(imm_msg);
-
-    auto decoded = IDDecoder::decode(imm);
-    ASSERT_EQ(std::get<0>(decoded), 73);
-    ASSERT_EQ(std::get<1>(decoded), sizeof(u64));
-
-    auto cur_msg = local_ring.cur_msg(std::get<1>(decoded)).value();
+  for (RI iter(receiver); iter.has_msgs(); iter.next()) {
+    auto cur_msg = iter.cur_msg();
     u64 *value_ptr = cur_msg.interpret_as<u64>(0);
     ASSERT_EQ(*value_ptr, recv_count++);
+
+    // send a reply
+    auto cur_session = iter.cur_session();
+
+    auto msg = ::rdmaio::Marshal::dump<u64>(recv_count + 73);
+    auto res_s = cur_session->send_blocking(
+        {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+    ASSERT(res_s == IOCode::Ok);
   }
+  ASSERT_EQ(recv_count, 64);
+
+  sleep(1);
+
+  // try recv reply from client
+  {
+    usize recv_count = 0;
+    for (RI iter(receiver_s); iter.has_msgs(); iter.next()) {
+      auto cur_msg = iter.cur_msg();
+      u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+      ASSERT_EQ(*value_ptr, recv_count++ + (1 + 73));
+    }
+    ASSERT_EQ(recv_count, 64);
+  }
+
+  // test with more rounds
+  {
+    for (uint i = 0; i < 32; ++i) {
+      auto msg = ::rdmaio::Marshal::dump<u64>(i);
+      auto res_s = ss->send_unsignaled(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    sleep(1);
+
+    LOG(4) << "Recv round 3";
+    usize recv_count = 0;
+
+    // try recv
+    for (RI iter(receiver); iter.has_msgs(); iter.next()) {
+      auto cur_msg = iter.cur_msg();
+      u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+      ASSERT_EQ(*value_ptr, recv_count++);
+
+      // send a reply
+      auto cur_session = iter.cur_session();
+
+      auto msg = ::rdmaio::Marshal::dump<u64>(recv_count + 73);
+      auto res_s = cur_session->send_blocking(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    ASSERT_EQ(recv_count, 32);
+
+    sleep(1);
+
+    // try recv reply from client
+    {
+      usize recv_count = 0;
+      for (RI iter(receiver_s); iter.has_msgs(); iter.next()) {
+        auto cur_msg = iter.cur_msg();
+        u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+        ASSERT_EQ(*value_ptr, recv_count++ + (1 + 73));
+      }
+      ASSERT_EQ(recv_count, 32);
+    }
+  }
+
+  {
+    for (uint i = 0; i < 16; ++i) {
+      auto msg = ::rdmaio::Marshal::dump<u64>(i);
+      auto res_s = ss->send_unsignaled(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    sleep(1);
+
+    LOG(4) << "Recv round 4";
+    usize recv_count = 0;
+
+    // try recv
+    for (RI iter(receiver); iter.has_msgs(); iter.next()) {
+      auto cur_msg = iter.cur_msg();
+      u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+      ASSERT_EQ(*value_ptr, recv_count++);
+
+      // send a reply
+      auto cur_session = iter.cur_session();
+
+      auto msg = ::rdmaio::Marshal::dump<u64>(recv_count + 73);
+      auto res_s = cur_session->send_blocking(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    ASSERT_EQ(recv_count, 16);
+
+    sleep(1);
+
+    // try recv reply from client
+    {
+      usize recv_count = 0;
+      for (RI iter(receiver_s); iter.has_msgs(); iter.next()) {
+        auto cur_msg = iter.cur_msg();
+        u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+        ASSERT_EQ(*value_ptr, recv_count++ + (1 + 73));
+      }
+      ASSERT_EQ(recv_count, 16);
+    }
+  }
+
+  {
+    for (uint i = 0; i < 16; ++i) {
+      auto msg = ::rdmaio::Marshal::dump<u64>(i);
+      auto res_s = ss->send_unsignaled(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    sleep(1);
+
+    LOG(4) << "Recv round 5";
+    usize recv_count = 0;
+
+    // try recv
+    for (RI iter(receiver); iter.has_msgs(); iter.next()) {
+      auto cur_msg = iter.cur_msg();
+      u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+      ASSERT_EQ(*value_ptr, recv_count++);
+
+      // send a reply
+      auto cur_session = iter.cur_session();
+
+      auto msg = ::rdmaio::Marshal::dump<u64>(recv_count + 73);
+      auto res_s = cur_session->send_blocking(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    ASSERT_EQ(recv_count, 16);
+
+    sleep(1);
+
+    // try recv reply from client
+    {
+      usize recv_count = 0;
+      for (RI iter(receiver_s); iter.has_msgs(); iter.next()) {
+        auto cur_msg = iter.cur_msg();
+        u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+        ASSERT_EQ(*value_ptr, recv_count++ + (1 + 73));
+      }
+      ASSERT_EQ(recv_count, 16);
+    }
+  }
+
+  // test more rounds
+  for(uint r = 0;r < 12;++r) {
+    for (uint i = 0; i < 16; ++i) {
+      auto msg = ::rdmaio::Marshal::dump<u64>(i);
+      auto res_s = ss->send_unsignaled(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    sleep(1);
+
+    LOG(4) << "Recv round " << r + 6;
+    usize recv_count = 0;
+
+    // try recv
+    for (RI iter(receiver); iter.has_msgs(); iter.next()) {
+      auto cur_msg = iter.cur_msg();
+      u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+      ASSERT_EQ(*value_ptr, recv_count++);
+
+      // send a reply
+      auto cur_session = iter.cur_session();
+
+      auto msg = ::rdmaio::Marshal::dump<u64>(recv_count + 73);
+      auto res_s = cur_session->send_blocking(
+          {.mem_ptr = (void *)(msg.data()), .sz = sizeof(u64)});
+      ASSERT(res_s == IOCode::Ok);
+    }
+    ASSERT_EQ(recv_count, 16);
+
+    sleep(1);
+
+    // try recv reply from client
+    {
+      usize recv_count = 0;
+      for (RI iter(receiver_s); iter.has_msgs(); iter.next()) {
+        auto cur_msg = iter.cur_msg();
+        u64 *value_ptr = cur_msg.interpret_as<u64>(0);
+        ASSERT_EQ(*value_ptr, recv_count++ + (1 + 73));
+      }
+      ASSERT_EQ(recv_count, 16);
+    }
+
+  }
+
 }
 
 } // namespace test

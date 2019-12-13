@@ -32,13 +32,17 @@ template <usize kRingSz> struct RemoteRing {
 
 /*!
   Local ring store local ring information
+  R: The size of the ring buffer
  */
+template <usize R>
 struct LocalRing {
   MemBlock local_mem;
   usize tailer = 0;
   usize header = 0;
 
-  explicit LocalRing(const MemBlock &mem) : local_mem(mem) {}
+  explicit LocalRing(const MemBlock &mem) : local_mem(mem) {
+    ASSERT(mem.sz >= R);
+  }
 
   LocalRing() : LocalRing(MemBlock(nullptr, 0)) {}
   ~LocalRing() = default;
@@ -63,7 +67,7 @@ private:
   // wo check, so it's private
   usize increment_tailer(const usize &sz) {
     auto cur_tailer = tailer;
-    tailer = (tailer + sz) % local_mem.sz;
+    tailer = (tailer + sz) % R;
     return cur_tailer;
   }
 };
