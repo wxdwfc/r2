@@ -14,7 +14,8 @@ namespace r2 {
   else if result == Err:
   - then yield (id) back
  */
-using poll_func_t = std::function<Result<std::pair<id_t, usize>>()>;
+using poll_func_t =
+    std::function<Result<std::pair<::r2::Routine::id_t, usize>>()>;
 class SScheduler;
 using sroutine_func_t = std::function<void(yield_f &yield, SScheduler &r)>;
 

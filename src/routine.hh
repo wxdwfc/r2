@@ -24,9 +24,9 @@ using b_coroutine_f = boost::coroutines::symmetric_coroutine<void>::call_type;
 using routine_func_t = std::function<void(yield_f &)>;
 
 class Routine {
+public:
   using id_t = u8;
 
-public:
   const id_t id;
 
   std::shared_ptr<routine_func_t> raw_f;

@@ -176,22 +176,23 @@ private:
     ibv_wc wc;
     auto id = R2_COR_ID();
 
-    poll_func_t poll_future = [qp_ptr,
-                               id]() -> Result<std::pair<id_t, usize>> {
+    poll_func_t poll_future =
+        [qp_ptr, id]() -> Result<std::pair<::r2::Routine::id_t, usize>> {
       auto wr_wc = qp_ptr->poll_rc_comp();
       if (wr_wc) {
         id_t polled_cid = static_cast<id_t>(std::get<0>(wr_wc.value()));
-        //wc = std::get<1>(wr_wc.value());
+        // wc = std::get<1>(wr_wc.value());
         auto wc = std::get<1>(wr_wc.value());
 
         if (wc.status == IBV_WC_SUCCESS)
-          return ::rdmaio::Ok(std::make_pair(polled_cid, 1u));
+          return ::rdmaio::Ok(
+              std::make_pair<::r2::Routine::id_t>(polled_cid, 1u));
         else {
-          return ::rdmaio::Err(std::make_pair(id, 1u));
+          return ::rdmaio::Err(std::make_pair<::r2::Routine::id_t>(id, 1u));
         }
       }
       // we still need to poll this future
-      return NotReady(std::make_pair(0u, 0u));
+      return NotReady(std::make_pair<::r2::Routine::id_t>(0u, 0u));
     };
 
     // end spawning future
