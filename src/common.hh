@@ -36,4 +36,15 @@ private:                                                                       \
 
 static inline void compile_fence(void) { asm volatile("" ::: "memory"); }
 
+#ifndef NO_OPT
+/*!
+  usage:
+  `
+  origin func: void xx() { ...}
+  no_opt origin func: void NO_OPT xx() {...}
+  `
+ */
+#define NO_OPT  __attribute__((optimize("O0")))
+#endif
+
 } // end namespace r2
