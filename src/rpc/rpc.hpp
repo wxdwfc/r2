@@ -99,6 +99,16 @@ class RPC {
 
   bool sanity_check_reply(const Req::Header *header);
 
+  u64 tsc_spent = 0;
+
+public:
+  // cycles used to process tsc since the last cally
+  u64 report_and_reset_processed() {
+    auto ret = tsc_spent;
+    tsc_spent = 0;
+    return ret;
+  }
+
   DISABLE_COPY_AND_ASSIGN(RPC);
 }; // end class RPC
 

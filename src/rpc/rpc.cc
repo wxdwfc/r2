@@ -135,11 +135,13 @@ void RPC::poll_all(RScheduler &s, std::vector<int> &routine_count)
     {
       try
       {
+        auto temp = read_tsc();
         rpc_callbacks_[header->rpc_id](
             *this,
             {.cor_id = header->cor_id, .dest = addr},
             (char *)(header) + sizeof(Req::Header),
             header->payload);
+        tsc_spent += read_tsc() - temp;
       }
       catch (...)
       {

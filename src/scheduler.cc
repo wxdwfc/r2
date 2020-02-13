@@ -15,7 +15,7 @@ RScheduler::RScheduler()
     : RScheduler([](handler_t &yield, RScheduler &coro) {
         /* This is a reactor, which polls RPC in-coming reqs
      */
-        while (coro.running_)
+        while (coro.is_running())
         {
           // poll the completion events
           coro.poll_all();
