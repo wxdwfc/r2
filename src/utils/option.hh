@@ -7,16 +7,16 @@
  * Disable warning.
  * Basically optional is very useful.
  */
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-W#warnings"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-W#warnings"
 #include <experimental/optional>
-//#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 
 namespace r2 {
 #if __cplusplus > 201402L
-template <typename T> using Option = std::optional<T>;
+using Option = std::optional<T>;
 #else
-template <typename T> using Option = std::experimental::optional<T>;
+template <typename T> using Option = ::std::experimental::optional<T>;
 #endif
 } // namespace r2
