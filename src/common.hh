@@ -36,6 +36,14 @@ private:                                                                       \
 
 static inline void compile_fence(void) { asm volatile("" ::: "memory"); }
 
+static inline void lfence(void) { asm volatile("lfence" ::: "memory"); }
+
+static inline void store_fence(void) { asm volatile("lfence" : : : "memory"); }
+
+static inline void mfence(void) { asm volatile("mfence" : : : "memory"); }
+
+static inline void relax_fence(void) { asm volatile("pause" : : : "memory"); }
+
 #ifndef NO_OPT
 /*!
   usage:

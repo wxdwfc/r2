@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "common.hh"
 
 #include <functional>
 #include <pthread.h>
