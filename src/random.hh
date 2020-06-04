@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include "common.hpp"
+#include "common.hh"
 
 namespace r2
 {
@@ -10,7 +10,7 @@ namespace r2
 namespace util
 {
 
-// taken from java:
+// taken from a java-version implementation:
 // http://developer.classpath.org/doc/java/util/Random-source.html
 class FastRandom
 {
