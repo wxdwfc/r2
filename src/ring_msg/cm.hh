@@ -1,3 +1,5 @@
+#pragma once
+
 #include "rlib/core/lib.hh"
 
 #include "./proto.hh"

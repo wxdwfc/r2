@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../common.hpp"
-#include "../allocator_master.hpp"
+#include "../common.hh"
+#include "../allocator_master.hh"
 
 namespace r2 {
 

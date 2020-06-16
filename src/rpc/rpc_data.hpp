@@ -16,7 +16,7 @@ enum MsgType {
  */
 class Req {
  public:
-  struct Meta {
+  struct __attribute__((packed)) Meta {
     u8      cor_id;
     Addr    dest;
   };

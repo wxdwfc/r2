@@ -20,15 +20,15 @@ class UdAdapter : public MsgProtocol
 public:
   UdAdapter(const Addr &my_addr, rdmaio::UDQP *sqp, rdmaio::UDQP *qp = nullptr);
 
-  rdmaio::IOStatus connect(const Addr &addr,
+  Result<std::string> connect(const Addr &addr,
                            const rdmaio::MacID &id,
                            int i) override;
 
-  rdmaio::IOStatus send_async(const Addr &addr,
+  Result<std::string> send_async(const Addr &addr,
                               const char *msg,
                               int size) override;
 
-  rdmaio::IOStatus flush_pending() override;
+  Result<std::string> flush_pending() override;
 
   int poll_all(const MsgProtocol::msg_callback_t &f) override;
 
@@ -39,7 +39,7 @@ public:
   */
   rdmaio::Buf_t get_my_conninfo() override;
 
-  rdmaio::IOStatus connect_from_incoming(const Addr &addr,
+  Result<std::string> connect_from_incoming(const Addr &addr,
                                          const rdmaio::Buf_t &connect_info);
 
   void disconnect(const Addr &addr);

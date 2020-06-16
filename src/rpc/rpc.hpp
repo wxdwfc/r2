@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../common.hpp"
-#include "../scheduler.hpp"
+#include "../common.hh"
+#include "../sshed.hh"
 #include "rpc_data.hpp"
 #include "buf_factory.hpp"
 
@@ -41,15 +41,15 @@ class RPC {
    * Meta-data reserved for each message.
    * It includes a header, and some implementation specific padding
    */
-  rdmaio::IOStatus call(const Req::Meta &context, int rpc_id, const Req::Arg &arg);
+  Result<std::string> call(const Req::Meta &context, int rpc_id, const Req::Arg &arg);
 
-  rdmaio::IOStatus reply(const Req::Meta &context, char *reply,int size);
+  Result<std::string> reply(const Req::Meta &context, char *reply,int size);
 
-  rdmaio::IOStatus call_async(const Req::Meta &context, int rpc_id, const Req::Arg &arg);
+  Result<std::string> call_async(const Req::Meta &context, int rpc_id, const Req::Arg &arg);
 
-  rdmaio::IOStatus reply_async(const Req::Meta &context, char *reply,int size);
+  Result<std::string> reply_async(const Req::Meta &context, char *reply,int size);
 
-  inline rdmaio::IOStatus flush_pending() {
+  inline Result<std::string> flush_pending() {
     return msg_handler_->flush_pending();
   }
 
@@ -59,9 +59,9 @@ class RPC {
    * allow this endpoint to create connect information to the sender.
    * a stop hand-shake delete the sender's information from the server.
    */
-  rdmaio::IOStatus start_handshake(const Addr &dest,RScheduler &s,handler_t &h);
+  Result<std::string> start_handshake(const Addr &dest,RScheduler &s,handler_t &h);
 
-  rdmaio::IOStatus end_handshake(const Addr &dest);
+  Result<std::string> end_handshake(const Addr &dest);
   // xxx
 
   /**

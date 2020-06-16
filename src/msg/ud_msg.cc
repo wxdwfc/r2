@@ -24,7 +24,7 @@ UdAdapter::UdAdapter(const Addr &my_addr, UDQP *sqp, UDQP *qp)
 static ibv_ah *
 create_ah(UDQP *qp, const QPAttr &attr);
 
-IOStatus
+Result<std::string>
 UdAdapter::connect(const Addr &addr, const rdmaio::MacID &id, int uid)
 {
 
@@ -53,7 +53,7 @@ UdAdapter::connect(const Addr &addr, const rdmaio::MacID &id, int uid)
     return ret;
 }
 
-IOStatus
+Result<std::string>
 UdAdapter::send_async(const Addr &addr, const char *msg, int size)
 {
 
@@ -99,7 +99,7 @@ UdAdapter::send_async(const Addr &addr, const char *msg, int size)
   return SUCC;
 }
 
-IOStatus
+Result<std::string>
 UdAdapter::flush_pending()
 {
   return sender_.flush_pending(send_qp_);
@@ -176,7 +176,7 @@ Buf_t UdAdapter::get_my_conninfo()
   return Marshal::serialize_to_buf(res);
 }
 
-IOStatus
+Result<std::string>
 UdAdapter::connect_from_incoming(const Addr &addr, const Buf_t &connect_info)
 {
   QPAttr attr;

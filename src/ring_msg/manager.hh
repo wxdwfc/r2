@@ -95,6 +95,7 @@ public:
       u64 key = 0;
 
       // 1.0 find the Nic to create this QP
+      LOG(0) << "try find nic";
       auto nic = rctrl_p->opened_nics.query(rc_req.nic_id);
       if (!nic)
         goto WA; // failed to find Nic
@@ -113,7 +114,7 @@ public:
       // 1.1 try to create and register this QP
       auto rc = qp::RC::create(nic.value(), rc_req.config, recv_cq).value();
       auto rc_status = rctrl_p->registered_qps.reg(rc_req.name, rc);
-
+      LOG(0) << "try to createqp";
       if (!rc_status) {
         // failed to create register this QP
         // clean up

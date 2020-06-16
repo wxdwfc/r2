@@ -10,6 +10,8 @@ namespace r2
 namespace rpc
 {
 
+using namespace rdmaio;
+
 static_assert(END_HS < RESERVED_RPC_ID,
               "The RPC internal uses too many RPC ids!");
 
@@ -43,7 +45,7 @@ make_rpc_header(int type, int id, int size, int cid)
           .cor_id = static_cast<u32>(cid)};
 }
 
-IOStatus
+Result<std::string>
 RPC::call(const Req::Meta &context, int rpc_id, const Req::Arg &arg)
 {
   auto ret = call_async(context, rpc_id, arg);
@@ -52,7 +54,7 @@ RPC::call(const Req::Meta &context, int rpc_id, const Req::Arg &arg)
   return ret;
 }
 
-IOStatus
+Result<std::string>
 RPC::call_async(const Req::Meta &context, int rpc_id, const Req::Arg &arg)
 {
 
@@ -65,7 +67,7 @@ RPC::call_async(const Req::Meta &context, int rpc_id, const Req::Arg &arg)
       context.dest, (char *)header, sizeof(Req::Header) + arg.len);
 }
 
-IOStatus
+Result<std::string>
 RPC::reply(const Req::Meta &context, char *reply, int size)
 {
   auto ret = reply_async(context, reply, size);
@@ -74,7 +76,7 @@ RPC::reply(const Req::Meta &context, char *reply, int size)
   return ret;
 }
 
-IOStatus
+Result<std::string>
 RPC::reply_async(const Req::Meta &context, char *reply, int size)
 {
   Req::Header *header = (Req::Header *)(reply - sizeof(Req::Header));
@@ -91,7 +93,7 @@ RPC::sanity_check_reply(const Req::Header *header)
   return replies_[header->cor_id].reply_count > 0;
 }
 
-rdmaio::IOStatus
+Result<std::string>
 RPC::start_handshake(const Addr &dest, RScheduler &s, handler_t &h)
 {
   auto info = msg_handler_->get_my_conninfo();
@@ -113,7 +115,7 @@ RPC::start_handshake(const Addr &dest, RScheduler &s, handler_t &h)
   return ret;
 }
 
-rdmaio::IOStatus
+Result<std::string>
 RPC::end_handshake(const Addr &dest)
 {
   char *msg_buf = get_buf_factory().alloc(0);

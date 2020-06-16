@@ -4,9 +4,9 @@
 #include <memory>
 #include <sstream>
 
-#include "rlib/common.hpp"
+#include "rlib/core/common.hh"
 
-#include "../common.hpp"
+#include "../common.hh"
 
 namespace r2
 {
@@ -69,12 +69,12 @@ public:
    * connect to the remote end point
    * opt: an optional field which can be used by different message implementations
    */
-  virtual rdmaio::IOStatus connect(const Addr &addr, const rdmaio::MacID &id, int opt = 0) = 0;
+  virtual Result<std::string> connect(const Addr &addr, const rdmaio::MacID &id, int opt = 0) = 0;
 
   /*!
     Internal connect to a client, given the connect_info
    */
-  virtual rdmaio::IOStatus connect_from_incoming(const Addr &addr, const rdmaio::Buf_t &connect_info)
+  virtual Result<std::string> connect_from_incoming(const Addr &addr, const rdmaio::Buf_t &connect_info)
   {
     return rdmaio::SUCC;
   }
@@ -91,9 +91,9 @@ public:
   {
   }
 
-  virtual rdmaio::IOStatus send_async(const Addr &addr, const char *msg, int size) = 0;
+  virtual Result<std::string> send_async(const Addr &addr, const char *msg, int size) = 0;
 
-  virtual rdmaio::IOStatus flush_pending() = 0;
+  virtual Result<std::string> flush_pending() = 0;
 
   virtual int padding() const
   {
@@ -101,7 +101,7 @@ public:
   }
 
   // send a message to a destination
-  rdmaio::IOStatus send(const Addr &addr, const char *msg, int size)
+  Result<std::string> send(const Addr &addr, const char *msg, int size)
   {
     auto ret = send_async(addr, msg, size);
     if (likely(ret == rdmaio::SUCC))
