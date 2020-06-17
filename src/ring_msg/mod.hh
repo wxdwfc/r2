@@ -59,18 +59,18 @@ public:
 };
 
 template <usize R, usize kRingSz, usize kMaxMsg> class RingRecvIter {
-  Receiver<R, kRingSz, kMaxMsg> *receiver;
+  Arc<Receiver<R, kRingSz, kMaxMsg>> receiver;
 
   int idx = 0;
-  const int total_msgs = -1;
+  int total_msgs = -1;
 
   Session<R, kRingSz, kMaxMsg> *s_ptr = nullptr;
 
   usize msg_sz = 0;
 
 public:
-  RingRecvIter(Arc<Receiver<R, kRingSz, kMaxMsg>> &r)
-      : receiver(r.get()),
+  RingRecvIter(Arc<Receiver<R, kRingSz, kMaxMsg>> r)
+      : receiver(r),
         total_msgs(ibv_poll_cq(receiver->recv_cq, receiver->num_wcs(),
                                receiver->get_wcs_ptr())) {
     fill_cur_msg();
@@ -78,6 +78,13 @@ public:
 
   ~RingRecvIter() {
     //LOG(0) << "end";
+  }
+
+  inline void begin() {
+    this->idx = 0;
+    this->total_msgs = ibv_poll_cq(receiver->recv_cq, receiver->num_wcs(),
+                                   receiver->get_wcs_ptr());
+    this->fill_cur_msg();
   }
 
   inline void next() {
