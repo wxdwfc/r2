@@ -85,7 +85,7 @@ TEST(RM, Connect) {
   // auto receiver =
   // rm.create_receiver<128, 1024, 64>("test_channel", recv_cq, alloc).value();
   auto receiver =
-      RecvFactory<128, 1024, 64>::create(rm, "test_channel", recv_cq, alloc)
+      RecvFactory<128, 4096, 64>::create(rm, "test_channel", recv_cq, alloc)
           .value();
   ASSERT_TRUE(receiver);
 
@@ -101,11 +101,11 @@ TEST(RM, Connect) {
   // rm.create_receiver<128, 1024, 64>("reply_channel", recv_cq1, alloc)
   //.value();
   auto receiver_s =
-      std::make_shared<Receiver<128, 1024, 64>>("reply_channel", recv_cq1);
+      std::make_shared<Receiver<128, 4096, 64>>("reply_channel", recv_cq1);
   ASSERT_TRUE(receiver_s);
 
   // 4. Try connect the session
-  auto ss = std::make_shared<Session<128, 1024, 64>>(
+  auto ss = std::make_shared<Session<128, 4096, 64>>(
       static_cast<u16>(73), nic, QPConfig(), recv_cq1, alloc);
   receiver_s->reg_channel(ss);
 
@@ -127,7 +127,7 @@ TEST(RM, Connect) {
   LocalRing<1024> local_ring(rm.query_ring(std::to_string(73)).value());
 
   // now we use the more advanced iterator for test
-  using RI = RingRecvIter<128, 1024, 64>;
+  using RI = RingRecvIter<128, 4096, 64>;
   for (RI iter(receiver); iter.has_msgs(); iter.next()) {
     auto cur_msg = iter.cur_msg();
     ASSERT_EQ(cur_msg.sz, sizeof(u64));

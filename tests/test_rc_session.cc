@@ -51,7 +51,7 @@ TEST(RCS, Basic) {
 
   const usize recv_depth = 128;
 
-  RCtrl ctrl(8888);
+  RCtrl ctrl(8889);
   RecvManager<recv_depth, 2048> manager(ctrl);
 
   auto res = RNicInfo::query_dev_names();
@@ -83,7 +83,7 @@ TEST(RCS, Basic) {
 
   ctrl.start_daemon();
   // 3. use the CM to connect for this QP
-  ConnectManager cm("localhost:8888");
+  ConnectManager cm("localhost:8889");
   if (cm.wait_ready(1000000, 2) ==
       IOCode::Timeout) // wait 1 second for server to ready, retry 2 times
     assert(false);

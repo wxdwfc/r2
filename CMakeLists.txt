@@ -24,7 +24,7 @@ target_link_libraries(r2 boost_context boost_system boost_coroutine boost_thread
 include(tests/tests.cmake)
 
 ## examples
-include(examples/examples.cmake)
+#include(examples/examples.cmake)
 
 enable_testing()
 

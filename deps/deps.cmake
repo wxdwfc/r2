@@ -16,8 +16,8 @@ include_directories(BEFORE ${CMAKE_SOURCE_DIR}/deps)
 ## install boost
 set( BOOST_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/boost )
 ExternalProject_Add(libboost1.61
-  URL $ENV{HOME}/download/boost_1_61_0.tar.bz2
-#  URL https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
+#  URL $ENV{HOME}/download/boost_1_61_0.tar.bz2
+  URL https://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.gz
 #  URL_HASH SHA256=a547bd06c2fd9a71ba1d169d9cf0339da7ebf4753849a8f7d6fdb8feee99b640
   CONFIGURE_COMMAND ./bootstrap.sh --prefix=${BOOST_INSTALL_DIR} --with-libraries=system,coroutine
   BUILD_COMMAND ./b2
