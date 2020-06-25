@@ -26,7 +26,7 @@ test:
   tags:
   - rdma
   script:
-    - cmake .; make boost;
+#    - cmake .; make boost;
     - cmake .; make coretest; ./coretest;
     - cmake .; make coretest_wo_rdma; ./coretest_wo_rdma;
 
