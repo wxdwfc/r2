@@ -1,0 +1,11 @@
+#pragma once
+
+namespace r2 {
+
+static inline unsigned long read_tsc(void) {
+  unsigned a, d;
+  __asm __volatile("rdtsc" : "=a"(a), "=d"(d));
+  return ((unsigned long)a) | (((unsigned long)d) << 32);
+}
+
+}
