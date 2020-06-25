@@ -7,13 +7,19 @@ before_script:
   - git submodule update --init
   - export export CXX=g++-7
 
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - deps/
+
 # run tests using the binary built before
 build:
   stage: build
   tags:
   - rdma
   script:
-    - cmake .; make boost; make jemalloc; make; 
+    - cmake .; make boost; make jemalloc; make;
+
 
 test:
   stage: test

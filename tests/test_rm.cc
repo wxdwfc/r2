@@ -55,7 +55,7 @@ public:
 
 TEST(RM, Connect) {
 
-  RCtrl ctrl(8888);
+  RCtrl ctrl(8885);
   RingManager<128> rm(ctrl);
 
   // init the structure for creating receiver
@@ -109,7 +109,7 @@ TEST(RM, Connect) {
       static_cast<u16>(73), nic, QPConfig(), recv_cq1, alloc);
   receiver_s->reg_channel(ss);
 
-  RingCM cm("localhost:8888");
+  RingCM cm("localhost:8885");
   if (cm.wait_ready(1000000, 2) ==
       IOCode::Timeout) // wait 1 second for server to ready, retry 2 times
     assert(false);
