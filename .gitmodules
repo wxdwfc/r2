@@ -1,6 +1,6 @@
 [submodule "deps/rlib"]
 	path = deps/rlib
-	url = https://ipads.se.sjtu.edu.cn:1312/weixd/rib.git
+	url = https://github.com/wxdwfc/rlibv2.git
 [submodule "deps/gflags"]
 	path = deps/gflags
 	url = https://github.com/gflags/gflags.git
