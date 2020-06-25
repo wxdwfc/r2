@@ -1,12 +1,10 @@
-### Run example of simple one-sided RDMA
-
-`cd /path/to/r2/; cmake .; make oserver;make oclient;`
-
-Suppose the server is at 1.1.1.1, so first at server, run: `./oserver`;
-
-Then at client run `./oclient --server_host=1.1.1.1`; Then all is done. 
-
-The codes are in `./examples/basic_onesided_rdma`. 
+R2 is a communication library over RDMA, which aimes at fast and easy use of RDMA.
+It is built over `ibverbs`, with minimal dependencies. 
+It provides several new abstractions for easier use of RDMA, 
+such as high-performance messaging primitives, lightweight async one-sided RDMA operations 
+using corotuines.
+R2 is well-tuned to achieved the best-possible performance with minimal overhead due to better abstractions. 
+It is part of **DrTM+H**, a high performance experimantal transactional engine using RDMA.
 
 
 ## License
