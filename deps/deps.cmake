@@ -5,10 +5,10 @@ include( ExternalProject )
 set(jemalloc_INSTALL_DIR ${CMAKE_SOURCE_DIR}/deps/jemalloc)
 ExternalProject_Add(jemalloc
 	       SOURCE_DIR ${CMAKE_SOURCE_DIR}/deps/jemalloc
-               CONFIGURE_COMMAND ./configure --with-jemalloc-prefix=je --prefix=${jemalloc_INSTALL_DIR}
-               BUILD_COMMAND make -j12
+               CONFIGURE_COMMAND autoconf
+               BUILD_COMMAND ./configure --with-jemalloc-prefix=je --prefix=${jemalloc_INSTALL_DIR}
                BUILD_IN_SOURCE 1
-               INSTALL_COMMAND "")
+               INSTALL_COMMAND make -j12)
 include_directories(./deps/jemalloc/include)
 
 include_directories(BEFORE ${CMAKE_SOURCE_DIR}/deps)
