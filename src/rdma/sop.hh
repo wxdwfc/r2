@@ -157,6 +157,7 @@ public:
     }
     qp_ptr->out_signaled += 1;
 
+    doorbell.freeze_done();
     doorbell.clear();
 
     // 3. wait this doorbell to complete
