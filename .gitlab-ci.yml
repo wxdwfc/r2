@@ -5,6 +5,7 @@ before_script:
   - git config --global user.name "wxd"
   - git submodule sync
   - git submodule update --init
+  - git submodule update --remote deps/rlib
   - export export CXX=g++-7
 
 cache:
