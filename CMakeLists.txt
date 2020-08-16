@@ -26,6 +26,9 @@ include(tests/tests.cmake)
 ## examples
 #include(examples/examples.cmake)
 
+## benchs
+include(benchs/bench.cmake)
+
 enable_testing()
 
 
