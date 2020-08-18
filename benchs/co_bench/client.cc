@@ -101,7 +101,7 @@ usize worker_fn(const usize &worker_id, Statics *s) {
   r2::compile_fence();
   for (int i = 0; i < FLAGS_coroutines; ++i) {
     ssched.spawn(
-        [qp, test_buf, remote_buf, &op, &ss, &rand, &remote_attr](R2_ASYNC) {
+        [qp, test_buf, remote_buf, i, &op, &ss, &rand, &remote_attr](R2_ASYNC) {
           while (running) {
             int index = rand.next() % 10000;
             op.set_rdma_rbuf(remote_buf + index, remote_attr.key);
@@ -110,8 +110,8 @@ usize worker_fn(const usize &worker_id, Statics *s) {
             ASSERT(ret == IOCode::Ok);
             ss.increment();
           }
+          if (i == FLAGS_coroutines - 1) R2_STOP();
           R2_RET;
-          R2_STOP();
         });
   }
   ssched.run();
