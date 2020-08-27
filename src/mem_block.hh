@@ -18,7 +18,7 @@ struct MemBlock {
 
   MemBlock(void *data_p, const u32 &sz) : mem_ptr(data_p), sz(sz) {}
 
-  template <typename T> inline T *interpret_as(const u32 &offset = 0) {
+  template <typename T> inline T *interpret_as(const u32 &offset = 0) const {
     if (unlikely(sz - offset < sizeof(T)))
       return nullptr;
     { // unsafe
