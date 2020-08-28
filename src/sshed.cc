@@ -92,8 +92,8 @@ void SScheduler::poll_all_futures() {
     // finally we check whether we need to add back coroutine
     if (need_add) {
       assert(routines.at(cid)->val.active == false);
-      if (cid != 2)
-        routine_chain.add(routines.at(cid));
+      //if (cid != 2)
+      routine_chain.add(routines.at(cid));
     }
   }
 }

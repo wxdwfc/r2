@@ -4,6 +4,8 @@ project(rtwo)
 
 ADD_DEFINITIONS(-std=c++14)
 
+set(CMAKE_CXX_FLAGS "-O2")
+
 ## install dependies
 include(deps/deps.cmake)
 
