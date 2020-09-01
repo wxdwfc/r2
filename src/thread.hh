@@ -7,6 +7,7 @@
 
 namespace r2 {
 
+
 /*!
   This is a simple wrapper over pthread, which uses a more abstracted way to create threads.
   T: the return type of the thread.
