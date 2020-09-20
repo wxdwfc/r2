@@ -34,7 +34,6 @@ struct AsyncOp : Op<NSGE> {
     return ::rdmaio::Ok(wc);
   }
 
- private:
   inline auto wait_one(const Arc<RC> &qp, R2_ASYNC) -> Result<ibv_wc> {
     // to avoid performance overhead of Arc, we first extract QP's raw pointer
     // out
