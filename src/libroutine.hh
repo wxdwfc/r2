@@ -27,7 +27,7 @@ namespace r2
 
 #define R2_EXECUTOR _r
 
-#define R2_ASYNC yield_f &yield, SScheduler &_r
+#define R2_ASYNC ::r2::yield_f &yield, ::r2::SScheduler &_r
 
 #define R2_PLACEHOLDER yield, _r
 

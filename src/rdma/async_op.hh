@@ -49,15 +49,15 @@ struct AsyncOp : Op<NSGE> {
         [qp_ptr, id]() -> Result<std::pair<::r2::Routine::id_t, usize>> {
       auto wr_wc = qp_ptr->poll_rc_comp();
       if (wr_wc) {
-        auto polled_cid =
+        ::r2::Routine::id_t polled_cid =
             static_cast<::r2::Routine::id_t>(std::get<0>(wr_wc.value()));
         // wc = std::get<1>(wr_wc.value());
         auto wc = std::get<1>(wr_wc.value());
 
-        if (wc.status == IBV_WC_SUCCESS)
-          return ::rdmaio::Ok(
-              std::make_pair<::r2::Routine::id_t,usize>(polled_cid, 1u));
-        else {
+        if (wc.status == IBV_WC_SUCCESS) {
+          auto ret = std::make_pair(polled_cid, 1u);
+          return ::rdmaio::Ok(ret);
+        } else {
           return ::rdmaio::Err(std::make_pair<::r2::Routine::id_t>(id, 1u));
         }
       }
