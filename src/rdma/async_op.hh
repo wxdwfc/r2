@@ -56,7 +56,7 @@ struct AsyncOp : Op<NSGE> {
 
         if (wc.status == IBV_WC_SUCCESS)
           return ::rdmaio::Ok(
-              std::make_pair<::r2::Routine::id_t>(polled_cid, 1u));
+              std::make_pair<::r2::Routine::id_t,usize>(polled_cid, 1u));
         else {
           return ::rdmaio::Err(std::make_pair<::r2::Routine::id_t>(id, 1u));
         }
