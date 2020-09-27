@@ -49,7 +49,7 @@ struct AsyncOp : Op<NSGE> {
         [qp_ptr, id]() -> Result<std::pair<::r2::Routine::id_t, usize>> {
       auto wr_wc = qp_ptr->poll_rc_comp();
       if (wr_wc) {
-        ::r2::Routine::id_t polled_cid =
+        auto polled_cid =
             static_cast<::r2::Routine::id_t>(std::get<0>(wr_wc.value()));
         // wc = std::get<1>(wr_wc.value());
         auto wc = std::get<1>(wr_wc.value());
