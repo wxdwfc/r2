@@ -15,6 +15,7 @@
 
 namespace r2 {
 #if __cplusplus > 201402L
+template <typename T>
 using Option = std::optional<T>;
 #else
 template <typename T> using Option = ::std::experimental::optional<T>;
