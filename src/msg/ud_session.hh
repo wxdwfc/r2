@@ -10,7 +10,7 @@ namespace r2 {
 using namespace rdmaio::qp;
 
 class UDSession : public Session {
-
+ public:
   UD *ud = nullptr; // unsafe for performance reason
 
   ibv_ah *ah = nullptr;
