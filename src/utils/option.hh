@@ -8,5 +8,5 @@
 #endif
 
 namespace r2 {
-using Option = std::optional<T>;
+template <typename T> using Option = std::optional<T>;
 } // namespace r2
