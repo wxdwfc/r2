@@ -9,7 +9,7 @@ public:
   static inline u64 read_tsc(void) {
     u32 a, d;
     __asm __volatile("rdtsc" : "=a"(a), "=d"(d));
-    return ((u32)a) | (((u32)d) << 32);
+    return ((u64)a) | (((u64)d) << 32);
   }
 
   RDTSC() : start(read_tsc()) {}
