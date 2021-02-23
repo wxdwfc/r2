@@ -26,6 +26,10 @@ public:
     set_seed0(seed);
   }
 
+  inline unsigned long get_cur_seed() {
+    return this->seed;
+  }
+
   inline unsigned long next()
   {
     return ((unsigned long)next(32) << 32) + next(32);
